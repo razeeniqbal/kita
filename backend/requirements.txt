@@ -1,6 +1,2 @@
-fastapi==0.115.12
-uvicorn[standard]==0.34.2
-sqlalchemy==2.0.40
-psycopg[binary]==3.2.6
-pydantic-settings==2.9.1
-pyjwt[crypto]==2.10.1
+# The dependency list lives in the repository root (Vercel reads only that file).
+-r ../requirements.txt

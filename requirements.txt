@@ -1,2 +1,8 @@
-# Python dependencies for the Vercel function in api/. The list itself lives with the backend.
--r backend/requirements.txt
+# Python dependencies for the API. Vercel installs this file for api/index.py and cannot follow
+# "-r" includes, so the list lives here; backend/requirements.txt points back to it.
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+sqlalchemy==2.0.40
+psycopg[binary]==3.2.6
+pydantic-settings==2.9.1
+pyjwt[crypto]==2.10.1
