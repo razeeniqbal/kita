@@ -76,4 +76,4 @@ From section 14 of the spec:
 
 ## Privacy
 
-This repository should stay private. Never commit Supabase service-role keys, `.env` files or real guest contact details.
+This repository is public. Your actual plan (tasks, budget, guests, documents) lives in the app's database, not here. Never commit Supabase service-role keys, `.env` files or real guest contact details.
