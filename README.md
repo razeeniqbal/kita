@@ -15,9 +15,15 @@ Each mode has its own dashboard, checklist, budget and payments, calendar, guest
 kita/
 ├── docs/
 │   ├── spec-v1.2.md            # current product spec (approved assets, BM checklists)
-│   └── spec-v1.0.md            # first spec, kept for reference
+│   ├── spec-v1.0.md            # first spec, kept for reference
+│   └── database.md             # schema overview and design decisions
 ├── assets/
 │   └── source/                 # the 12 approved original images, unchanged
+├── backend/
+│   └── .env.example            # copy to backend/.env (git-ignored) with the database URL
+├── supabase/
+│   ├── migrations/             # SQL schema migrations
+│   └── seed.sql                # workspace, both modes, BM starter checklists
 ├── frontend/
 │   └── public/assets/kita/     # optimised WebP copies (480w and 960w) served by the app
 ├── prototype/
@@ -26,7 +32,7 @@ kita/
     └── optimize_assets.py      # rebuilds frontend/public/assets/kita from assets/source
 ```
 
-The Angular frontend and FastAPI backend described in the spec (sections 8 to 11) are not started yet.
+The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The Angular frontend and FastAPI backend described in the spec (sections 8 to 11) are not started yet.
 
 ## Prototype
 
