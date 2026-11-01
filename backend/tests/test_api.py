@@ -31,6 +31,12 @@ def pay(client, world, event_id, expense_id, amount_sen, who="razeen"):
 
 # Sign-in and membership ---------------------------------------------------------------------------
 
+def test_public_config_needs_no_sign_in_and_has_no_secrets(client):
+    r = client.get("/api/v1/public-config")
+    assert r.status_code == 200
+    assert set(r.json()) == {"supabase_url", "supabase_anon_key", "auth_configured"}
+
+
 def test_requests_without_a_valid_token_are_refused(client, world):
     assert client.get("/api/v1/planning-events").status_code == 401
     assert client.get("/api/v1/planning-events", headers={"Authorization": "Bearer nonsense"}).status_code == 401

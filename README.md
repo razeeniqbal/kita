@@ -26,7 +26,8 @@ kita/
 ├── supabase/
 │   ├── migrations/             # SQL schema migrations
 │   └── seed.sql                # workspace, both modes, BM starter checklists
-├── frontend/
+├── frontend/                   # Angular app (see frontend/README.md)
+│   ├── src/app/                # pages, shell, auth, API client
 │   └── public/assets/kita/     # optimised WebP copies (480w and 960w) served by the app
 ├── prototype/
 │   └── kita.html               # working prototype, published as a claude.ai artifact
@@ -34,7 +35,7 @@ kita/
     └── optimize_assets.py      # rebuilds frontend/public/assets/kita from assets/source
 ```
 
-The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The FastAPI backend is built and tested; see [`backend/README.md`](backend/README.md). The Angular frontend is not started yet.
+The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The FastAPI backend is built and tested; see [`backend/README.md`](backend/README.md). The Angular app is built, including sign-in; see [`frontend/README.md`](frontend/README.md). Deployment to Vercel is next.
 
 ## Prototype
 

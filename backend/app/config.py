@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     database_url: str
     # Project URL, e.g. https://<project-ref>.supabase.co. Used to fetch the JWT signing keys.
     supabase_url: str = ""
+    # Public "anon" / publishable key. Safe in the browser; the frontend reads it from /api/v1/public-config.
+    supabase_anon_key: str = ""
     # Legacy shared JWT secret (HS256). Only needed if the project still signs tokens with it.
     supabase_jwt_secret: str | None = None
     jwt_audience: str = "authenticated"

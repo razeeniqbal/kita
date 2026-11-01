@@ -35,6 +35,16 @@ def health(db: Connection = Depends(get_db)):
     return {"status": "ok"}
 
 
+@api.get("/public-config", tags=["health"])
+def public_config():
+    """What the browser needs to start Supabase sign-in. Both values are public by design."""
+    return {
+        "supabase_url": settings.supabase_url,
+        "supabase_anon_key": settings.supabase_anon_key,
+        "auth_configured": bool(settings.supabase_url and settings.supabase_anon_key),
+    }
+
+
 for module in (workspace, events, tasks, budget, vendors, calendar, guests, notes):
     api.include_router(module.router)
 
