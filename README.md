@@ -19,8 +19,10 @@ kita/
 │   └── database.md             # schema overview and design decisions
 ├── assets/
 │   └── source/                 # the 12 approved original images, unchanged
-├── backend/
-│   └── .env.example            # copy to backend/.env (git-ignored) with the database URL
+├── backend/                    # FastAPI API (see backend/README.md)
+│   ├── app/                    # routes, auth, database access
+│   ├── tests/                  # pytest suite, runs against local Docker PostgreSQL
+│   └── .env.example            # copy to backend/.env (git-ignored)
 ├── supabase/
 │   ├── migrations/             # SQL schema migrations
 │   └── seed.sql                # workspace, both modes, BM starter checklists
@@ -32,7 +34,7 @@ kita/
     └── optimize_assets.py      # rebuilds frontend/public/assets/kita from assets/source
 ```
 
-The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The Angular frontend and FastAPI backend described in the spec (sections 8 to 11) are not started yet.
+The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The FastAPI backend is built and tested; see [`backend/README.md`](backend/README.md). The Angular frontend is not started yet.
 
 ## Prototype
 
