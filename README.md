@@ -16,7 +16,8 @@ kita/
 ├── docs/
 │   ├── spec-v1.2.md            # current product spec (approved assets, BM checklists)
 │   ├── spec-v1.0.md            # first spec, kept for reference
-│   └── database.md             # schema overview and design decisions
+│   ├── database.md             # schema overview and design decisions
+│   └── deployment.md           # Vercel + Supabase setup, step by step
 ├── assets/
 │   └── source/                 # the 12 approved original images, unchanged
 ├── backend/                    # FastAPI API (see backend/README.md)
@@ -31,11 +32,13 @@ kita/
 │   └── public/assets/kita/     # optimised WebP copies (480w and 960w) served by the app
 ├── prototype/
 │   └── kita.html               # working prototype, published as a claude.ai artifact
-└── scripts/
-    └── optimize_assets.py      # rebuilds frontend/public/assets/kita from assets/source
+├── scripts/
+│   └── optimize_assets.py      # rebuilds frontend/public/assets/kita from assets/source
+├── api/index.py                # Vercel entry point for the FastAPI backend
+└── vercel.json                 # build, routing, region, security headers
 ```
 
-The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The FastAPI backend is built and tested; see [`backend/README.md`](backend/README.md). The Angular app is built, including sign-in; see [`frontend/README.md`](frontend/README.md). Deployment to Vercel is next.
+The database schema and starter checklists are live on Supabase; see [`docs/database.md`](docs/database.md). The FastAPI backend is built and tested; see [`backend/README.md`](backend/README.md). The Angular app is built, including sign-in; see [`frontend/README.md`](frontend/README.md). It deploys to Vercel as one project; see [`docs/deployment.md`](docs/deployment.md).
 
 ## Prototype
 

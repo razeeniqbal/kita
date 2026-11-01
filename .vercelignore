@@ -1,0 +1,10 @@
+# Not needed to build or run the deployed app.
+assets/source/
+prototype/
+docs/
+scripts/
+supabase/
+backend/tests/
+backend/.env
+backend/.env.*
+!backend/.env.example

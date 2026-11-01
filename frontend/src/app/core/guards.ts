@@ -14,8 +14,12 @@ export const signedInGuard: CanActivateFn = async () => {
 
 /** Part of the workspace. Signed-in people who were never added see a short explanation instead. */
 export const memberGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
   const session = inject(SessionStore);
   const router = inject(Router);
+  // Guards run in parallel: don't ask the API about membership before we know someone is signed in.
+  await auth.init();
+  if (!auth.signedIn()) return router.parseUrl('/login');
   try {
     await session.load();
   } catch {
