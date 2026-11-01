@@ -29,10 +29,10 @@ type LoginMode = 'password' | 'link' | 'reset';
             @if (error()) { <div class="sheet-err" role="alert">{{ error() }}</div> }
             @if (sent()) { <div class="auth-ok" role="status">{{ sent() }}</div> }
             <div class="list">
-              <div class="field"><label for="email">Email</label>
+              <div class="field stack"><label for="email">Email</label>
                 <input id="email" type="email" formControlName="email" autocomplete="email" placeholder="you@example.com"></div>
               @if (mode() === 'password') {
-                <div class="field"><label for="password">Password</label>
+                <div class="field stack"><label for="password">Password</label>
                   <input id="password" type="password" formControlName="password" autocomplete="current-password"></div>
               }
             </div>
@@ -118,9 +118,9 @@ export class Login {
           <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
             @if (error()) { <div class="sheet-err" role="alert">{{ error() }}</div> }
             <div class="list">
-              <div class="field"><label for="pw">New password</label>
+              <div class="field stack"><label for="pw">New password</label>
                 <input id="pw" type="password" formControlName="password" autocomplete="new-password"></div>
-              <div class="field"><label for="pw2">Repeat it</label>
+              <div class="field stack"><label for="pw2">Repeat it</label>
                 <input id="pw2" type="password" formControlName="repeat" autocomplete="new-password"></div>
             </div>
             <button class="btn block" type="submit" [disabled]="busy()">Save password</button>
