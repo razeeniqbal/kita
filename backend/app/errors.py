@@ -3,7 +3,7 @@ import logging
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, OperationalError
 
 logger = logging.getLogger("kita")
 
@@ -11,6 +11,11 @@ logger = logging.getLogger("kita")
 async def database_error_handler(request: Request, exc: DBAPIError) -> JSONResponse:
     code = getattr(exc.orig, "sqlstate", None)
     message = str(exc.orig).strip().splitlines()[0] if exc.orig else ""
+    if isinstance(exc, OperationalError) and code is None:
+        # Could not connect at all (wrong DATABASE_URL, paused project, network). Log the reason for Vercel's logs.
+        logger.error("Database unreachable on %s %s: %s", request.method, request.url.path, message)
+        return JSONResponse({"detail": "kita can't reach its database right now. Please try again in a moment."},
+                            status.HTTP_503_SERVICE_UNAVAILABLE)
     if code == "23514" and message.startswith("Payments of"):
         detail = ("These payments add up to more than the committed amount. "
                   "Correct the amounts, or turn on allow_overpayment for this expense.")

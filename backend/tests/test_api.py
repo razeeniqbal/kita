@@ -31,6 +31,19 @@ def pay(client, world, event_id, expense_id, amount_sen, who="razeen"):
 
 # Sign-in and membership ---------------------------------------------------------------------------
 
+def test_unreachable_database_is_reported_as_503():
+    import asyncio
+    from sqlalchemy.exc import OperationalError
+    from starlette.requests import Request
+
+    from app.errors import database_error_handler
+
+    request = Request({"type": "http", "method": "GET", "path": "/api/v1/health", "headers": []})
+    error = OperationalError("select 1", {}, Exception('could not translate host name "db.example" to address'))
+    response = asyncio.run(database_error_handler(request, error))
+    assert response.status_code == 503 and b"can't reach its database" in response.body
+
+
 def test_public_config_needs_no_sign_in_and_has_no_secrets(client):
     r = client.get("/api/v1/public-config")
     assert r.status_code == 200
