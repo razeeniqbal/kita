@@ -18,8 +18,7 @@ type Range = 'upcoming' | 'past';
   imports: [ReactiveFormsModule, Icon, CalendarRow, EmptyState, Sheet],
   template: `
     <div class="ph">
-      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Calendar</h1>
-        <p class="sub">Appointments you add, plus task due dates, payment deadlines and the event date.</p></div>
+      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Calendar</h1></div>
       <button type="button" class="btn" (click)="openNew()"><k-icon name="plus" [size]="18" />Add appointment</button>
     </div>
     <div class="toolbar">

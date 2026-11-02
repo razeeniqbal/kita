@@ -365,3 +365,9 @@ k-picker{display:block;position:relative}
   .mode-card .art{aspect-ratio:2/1}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+/* Budget card: paid of total, one bar, one line underneath */
+.bud-n{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;color:var(--text2);font-size:15px}
+.bud-foot{display:flex;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:10px;color:var(--text2);font-size:14px}
+.bud-foot .over{color:var(--danger);font-weight:600}
+.ok-text{color:var(--success)!important}

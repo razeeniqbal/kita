@@ -111,7 +111,7 @@ export function expensePickerItems(expenses: Expense[], categories: Category[]):
     .sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name))
     .map(e => ({
       id: e.id, label: e.name, group: (e.category_id && byId.get(e.category_id)?.name) || 'Uncategorised',
-      hint: e.committed_sen ? `${rm(e.committed_sen)} committed` : `${rm(e.planned_sen)} planned`,
+      hint: rm(e.committed_sen || e.planned_sen),
     }));
 }
 

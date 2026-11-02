@@ -3,7 +3,7 @@ the other mode is ever counted (spec section 4)."""
 import datetime as dt
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.engine import Connection
 
 from app.crud import as_dict
@@ -50,7 +50,17 @@ def budget_summary(db: Connection, event_id: uuid.UUID) -> dict:
         .where(expenses.c.planning_event_id == event_id).group_by(payments.c.paid_by)
     ).all()}
     planned, committed, paid = int(planned), int(committed), sum(by_payer.values())
+    # The simple view: each line costs its agreed price, or its estimate until a price is agreed.
+    paid_each = paid_per_expense(event_id).subquery()
+    cost = case((expenses.c.committed_sen > 0, expenses.c.committed_sen), else_=expenses.c.planned_sen)
+    total_cost, left_to_pay = db.execute(
+        select(func.coalesce(func.sum(cost), 0),
+               func.coalesce(func.sum(func.greatest(cost - func.coalesce(paid_each.c.paid, 0), 0)), 0))
+        .outerjoin(paid_each, paid_each.c.expense_id == expenses.c.id)
+        .where(expenses.c.planning_event_id == event_id)
+    ).one()
     return {
+        "cost_sen": int(total_cost), "left_to_pay_sen": int(left_to_pay),
         "target_sen": int(target), "planned_sen": planned, "committed_sen": committed, "paid_sen": paid,
         "remaining_to_allocate_sen": int(target) - planned, "outstanding_sen": committed - paid,
         "paid_by": by_payer,

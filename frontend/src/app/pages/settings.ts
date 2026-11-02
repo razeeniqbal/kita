@@ -16,7 +16,7 @@ import { Notice, Sheet } from '../shared/ui';
   selector: 'k-settings',
   imports: [ReactiveFormsModule, EventSheet, Icon, Notice, Sheet],
   template: `
-    <div class="ph"><div class="ph-t"><div class="eyebrow">Shared</div><h1>Settings</h1><p class="sub">These apply to both modes.</p></div></div>
+    <div class="ph"><div class="ph-t"><div class="eyebrow">Shared</div><h1>Settings</h1></div></div>
 
     <div class="sec-h">Couple</div>
     <div class="list"><div class="row"><span class="avatar">{{ names().PARTNER_1.charAt(0) }}</span>

@@ -56,7 +56,6 @@ import { Icon } from '../shared/icon';
               <div class="row-main"><span class="t">{{ n.title }}</span>@if (n.body) { <span class="s">{{ n.body.slice(0, 90) }}</span> }</div></div>
           }
         </div>
-        <p class="formula">Budgets, tasks and guests are never combined. Each mode keeps its own records.</p>
       </div>
     </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,

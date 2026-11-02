@@ -65,6 +65,8 @@ export interface Me {
 }
 export interface Progress { total: number; done: number; in_progress: number; not_started: number; postponed: number; percent: number; }
 export interface BudgetSummary {
+  /** Total cost (each line's agreed price, else its estimate) and what is still to pay on it. */
+  cost_sen: number; left_to_pay_sen: number;
   target_sen: number; planned_sen: number; committed_sen: number; paid_sen: number;
   remaining_to_allocate_sen: number; outstanding_sen: number; paid_by: Partial<Record<Payer, number>>;
 }

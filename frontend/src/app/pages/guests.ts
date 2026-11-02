@@ -15,8 +15,7 @@ import { EmptyState, Sheet } from '../shared/ui';
   imports: [ReactiveFormsModule, NgTemplateOutlet, Icon, EmptyState, Sheet],
   template: `
     <div class="ph">
-      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>{{ mode.mode() === 'PERKAHWINAN' ? 'Guests & RSVP' : 'Guests' }}</h1>
-        <p class="sub">Kept separate for each mode. Guest details stay private to the two of you.</p></div>
+      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>{{ mode.mode() === 'PERKAHWINAN' ? 'Guests & RSVP' : 'Guests' }}</h1></div>
       <button type="button" class="btn" (click)="openNew()"><k-icon name="plus" [size]="18" />Add guest</button>
     </div>
 

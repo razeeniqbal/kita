@@ -15,10 +15,9 @@ import { EmptyState, Notice, Sheet } from '../shared/ui';
   imports: [ReactiveFormsModule, Icon, EmptyState, Notice, Sheet],
   template: `
     <div class="ph">
-      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Documents</h1>
-        <p class="sub">Quotations, receipts, agreements and paperwork. Only the two of you can open them.</p></div>
+      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Documents</h1></div>
     </div>
-    <k-notice icon="upload">Uploading files is coming next. It needs a private storage space set up in Supabase first.</k-notice>
+    <k-notice icon="upload">File uploads are coming soon.</k-notice>
     @if (docs.hasValue() && docs.value().length) {
       <div class="list">
         @for (d of docs.value(); track d.id) {

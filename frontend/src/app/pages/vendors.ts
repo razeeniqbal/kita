@@ -17,8 +17,7 @@ const STATUSES: VendorStatus[] = ['CONSIDERING', 'SHORTLISTED', 'BOOKED', 'COMPL
   imports: [ReactiveFormsModule, Art, Icon, Sheet],
   template: `
     <div class="ph">
-      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Vendors</h1>
-        <p class="sub">Quotes and bookings for this mode only. A vendor's contact details can be reused in the other mode.</p></div>
+      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Vendors</h1></div>
       <button type="button" class="btn" (click)="openNew()"><k-icon name="plus" [size]="18" />Add vendor</button>
     </div>
 

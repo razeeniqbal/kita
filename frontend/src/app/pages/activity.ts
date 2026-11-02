@@ -9,8 +9,7 @@ import { actorName } from '../shared/rows';
 @Component({
   selector: 'k-activity',
   template: `
-    <div class="ph"><div class="ph-t"><div class="eyebrow">Shared</div><h1>Activity</h1>
-      <p class="sub">Who changed what, across both modes. The latest 100 changes are shown.</p></div></div>
+    <div class="ph"><div class="ph-t"><div class="eyebrow">Shared</div><h1>Activity</h1></div></div>
     @if (log.hasValue() && log.value().length) {
       <div class="list">
         @for (a of log.value(); track a.id) {

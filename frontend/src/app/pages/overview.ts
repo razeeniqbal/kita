@@ -39,13 +39,12 @@ import { Ring } from '../shared/ui';
         <section class="card">
           <div class="card-h"><h2>Progress</h2><a class="link" routerLink="checklist">Checklist<k-icon name="chevron-right" [size]="16" /></a></div>
           <div class="prog"><k-ring [percent]="d.progress.percent" />
-            <div class="prog-l"><span><span class="big-n">{{ d.progress.done }}</span> of <b>{{ d.progress.total }}</b> tasks done</span>
-              <span><b>{{ d.progress.in_progress }}</b> in progress · <b>{{ d.progress.not_started }}</b> not started · <b>{{ d.progress.postponed }}</b> postponed</span></div></div>
+            <div class="prog-l"><span><span class="big-n">{{ d.progress.done }}</span> of <b>{{ d.progress.total }}</b> tasks done</span></div></div>
         </section>
 
         <section class="card">
           <div class="card-h"><h2>Budget</h2><a class="link" routerLink="budget">Details<k-icon name="chevron-right" [size]="16" /></a></div>
-          <k-budget-card [summary]="d.budget" compact />
+          <k-budget-card [summary]="d.budget" />
         </section>
 
         <section class="card">
@@ -68,8 +67,7 @@ import { Ring } from '../shared/ui';
           <div class="card-h"><h2>People &amp; vendors</h2></div>
           <div class="kv">
             <div><span>Guests</span><b>{{ d.guests.total }}</b></div><div><span>Seats confirmed</span><b>{{ d.guests.seats_confirmed }}</b></div>
-            <div><span>RSVP pending</span><b>{{ d.guests.rsvp_pending }}</b></div><div><span>Vendors booked</span><b>{{ d.vendors_booked }}</b></div>
-            <div><span>Documents</span><b>{{ d.documents }}</b></div>
+            <div><span>Vendors booked</span><b>{{ d.vendors_booked }}</b></div>
           </div>
         </section>
 

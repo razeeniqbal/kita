@@ -6,7 +6,7 @@ import { API, Api, errorMessage, eventPath, isConflict } from '../core/api';
 import { formatTimestamp } from '../core/format';
 import { ModeService } from '../core/mode';
 import {
-  Assignee, Category, Expense, MODES, PRIORITY_LABEL, Priority, STATUS_LABEL, TASK_SECTIONS, Task, TaskStatus,
+  Assignee, Category, Expense, MODES, Priority, STATUS_LABEL, TASK_SECTIONS, Task, TaskStatus,
 } from '../core/models';
 import { SessionStore } from '../core/session';
 import { Toast } from '../core/ui';
@@ -25,7 +25,7 @@ const PRIORITY_ORDER: Record<Priority, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
   template: `
     <div class="ph">
       <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Checklist</h1>
-        <p class="sub">{{ progressText() }} The starter tasks are editable suggestions, not legal advice. Confirm nikah requirements with your state religious authority.</p></div>
+        <p class="sub">{{ progressText() }}</p></div>
       <button type="button" class="btn" (click)="openNew()"><k-icon name="plus" [size]="18" />Add task</button>
     </div>
 
@@ -57,21 +57,17 @@ const PRIORITY_ORDER: Record<Priority, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
         @if (error()) { <div class="sheet-err" role="alert">{{ error() }}</div> }
         <div class="list">
           <div class="field stack"><label for="t-title">Title</label><input id="t-title" formControlName="title" maxlength="300" placeholder="e.g. Memilih cincin pertunangan"></div>
-          <div class="field stack"><label for="t-desc">Description</label><textarea id="t-desc" formControlName="description" rows="3" placeholder="Details, links, who to call"></textarea></div>
-        </div>
-        <div class="list">
-          <div class="field"><label for="t-cat">Section</label><select id="t-cat" formControlName="category">
-            @for (c of sections(); track c) { <option [value]="c">{{ c }}</option> }</select></div>
           <div class="field"><label for="t-status">Status</label><select id="t-status" formControlName="status">
             @for (s of statuses; track s) { <option [value]="s">{{ statusLabel[s] }}</option> }</select></div>
-          <div class="field stack"><span class="lab">Priority</span><div class="seg" role="radiogroup" aria-label="Priority">
-            @for (p of priorities; track p) { <label><input type="radio" formControlName="priority" [value]="p"><span>{{ priorityLabel[p] }}</span></label> }</div></div>
+          <div class="field"><label for="t-due">Due date</label><input id="t-due" type="date" formControlName="due_date"></div>
+          <div class="field"><label for="t-who">Who</label><select id="t-who" formControlName="assignee">
+            @for (a of assignees(); track a.key) { <option [value]="a.key">{{ a.label }}</option> }</select></div>
         </div>
         <div class="list">
-          <div class="field"><label for="t-due">Due date</label><input id="t-due" type="date" formControlName="due_date"></div>
-          <div class="field"><label for="t-who">Assigned to</label><select id="t-who" formControlName="assignee">
-            @for (a of assignees(); track a.key) { <option [value]="a.key">{{ a.label }}</option> }</select></div>
-          <k-picker label="Linked cost" [items]="expenseItems()" [value]="form.controls.expense_id.value || null"
+          <div class="field stack"><label for="t-desc">Notes</label><textarea id="t-desc" formControlName="description" rows="2" placeholder="Optional"></textarea></div>
+          <div class="field"><label for="t-cat">Section</label><select id="t-cat" formControlName="category">
+            @for (c of sections(); track c) { <option [value]="c">{{ c }}</option> }</select></div>
+          <k-picker label="Cost" [items]="expenseItems()" [value]="form.controls.expense_id.value || null"
             emptyText="No budget lines yet. Add them in Budget." (changed)="form.controls.expense_id.setValue($event ?? '')" />
         </div>
         @if (editing(); as t) {
@@ -101,9 +97,7 @@ export class Checklist {
   private readonly router = inject(Router);
 
   protected readonly statuses: TaskStatus[] = ['NOT_STARTED', 'IN_PROGRESS', 'DONE', 'POSTPONED'];
-  protected readonly priorities: Priority[] = ['LOW', 'NORMAL', 'HIGH'];
   protected readonly statusLabel = STATUS_LABEL;
-  protected readonly priorityLabel = PRIORITY_LABEL;
   protected readonly owner = signal<Assignee | 'ALL'>('ALL');
   protected readonly status = signal<StatusFilter>('open');
   protected readonly sheetOpen = signal(false);

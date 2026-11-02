@@ -16,8 +16,7 @@ import { EmptyState, Sheet } from '../shared/ui';
   imports: [ReactiveFormsModule, Icon, EmptyState, Sheet],
   template: `
     <div class="ph">
-      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Notes &amp; inspiration</h1>
-        <p class="sub">Decisions, ideas and links. Pinned notes stay on top.</p></div>
+      <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Notes &amp; inspiration</h1></div>
       <button type="button" class="btn" (click)="openNew()"><k-icon name="plus" [size]="18" />Add note</button>
     </div>
     @if (notes.hasValue() && notes.value().length) {

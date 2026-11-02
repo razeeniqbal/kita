@@ -26,7 +26,7 @@ import { Sheet } from './ui';
             </div></div>
         </div>
         <div class="list">
-          <div class="field"><label for="ev-budget">Target budget (RM)</label><input id="ev-budget" inputmode="decimal" formControlName="target_budget" placeholder="0.00"></div>
+          <div class="field"><label for="ev-budget">Budget (RM)</label><input id="ev-budget" inputmode="decimal" formControlName="target_budget" placeholder="0.00"></div>
         </div>
         <div class="sheet-acts"><button class="btn block" type="submit" [disabled]="busy() || !event()">Save changes</button></div>
       </form>
