@@ -23,9 +23,17 @@ export interface PickerItem {
     <button type="button" class="field picker-field" (click)="open.set(!open())" [attr.aria-expanded]="open()"
             [attr.aria-label]="label() + ': ' + (selected()?.label ?? none())">
       <span class="lab">{{ label() }}</span>
-      <span class="picker-value" [class.empty]="!selected()">{{ selected()?.label ?? none() }}</span>
+      <span class="picker-value" [class.is-empty]="!selected()">{{ selected()?.label ?? none() }}</span>
       <k-icon name="chevron-right" [size]="16" class="picker-chev" [class.down]="open()" />
     </button>
+    @if (!value() && !open() && suggestedItems().length) {
+      <div class="picker-suggest">
+        <span>Suggested</span>
+        @for (item of suggestedItems(); track item.id) {
+          <button type="button" class="chip" (click)="choose(item.id)" [attr.aria-label]="'Link ' + item.label"><k-icon name="link" [size]="13" />{{ item.label }}</button>
+        }
+      </div>
+    }
     @if (open()) {
       <div class="picker" role="listbox" [attr.aria-label]="label()">
         @if (items().length > 6) {
@@ -57,11 +65,15 @@ export class Picker {
   readonly value = input<string | null>(null);
   readonly none = input('None');
   readonly emptyText = input('Nothing to choose yet.');
+  /** Ids to offer as one-tap choices while nothing is linked (see suggestLinks). */
+  readonly suggestions = input<string[]>([]);
   readonly changed = output<string | null>();
 
   protected readonly open = signal(false);
   protected readonly query = signal('');
   protected readonly selected = computed(() => this.items().find(i => i.id === this.value()) ?? null);
+  protected readonly suggestedItems = computed(() =>
+    this.suggestions().map(id => this.items().find(i => i.id === id)).filter((i): i is PickerItem => !!i));
   protected readonly groups = computed(() => {
     const q = this.query().trim().toLowerCase();
     const groups: { name: string; items: PickerItem[] }[] = [];
@@ -101,4 +113,34 @@ export function expensePickerItems(expenses: Expense[], categories: Category[]):
       id: e.id, label: e.name, group: (e.category_id && byId.get(e.category_id)?.name) || 'Uncategorised',
       hint: e.committed_sen ? `${rm(e.committed_sen)} committed` : `${rm(e.planned_sen)} planned`,
     }));
+}
+
+/** Words that say nothing about what an item is. */
+const FILLER = new Set(['dan', 'yang', 'jika', 'ada', 'untuk', 'atau', 'serta', 'kepada', 'dengan', 'pada', 'hantaran',
+  'the', 'and', 'for', 'of']);
+
+function words(text: string): string[] {
+  return text.toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/)
+    .filter(w => w.length >= 3 && !FILLER.has(w));
+}
+
+/**
+ * Up to `max` items whose label shares words with `name` (e.g. "Cincin" → "Memilih cincin
+ * pertunangan…", "Hantaran: Cincin"). Whole-word matches count double; a shared start of 4+ letters
+ * counts once. When nothing matches, items whose label contains any `fallback` word are offered.
+ */
+export function suggestLinks(name: string, items: PickerItem[], { max = 2, fallback = [] as string[] } = {}): string[] {
+  const wanted = words(name);
+  const scored = wanted.length ? items.map(item => {
+    const have = words(item.label);
+    let score = 0;
+    for (const w of wanted) {
+      if (have.includes(w)) score += 2;
+      else if (w.length >= 4 && have.some(h => h.length >= 4 && h.slice(0, 4) === w.slice(0, 4))) score += 1;
+    }
+    return { id: item.id, score };
+  }).filter(s => s.score > 0).sort((a, b) => b.score - a.score) : [];
+  if (scored.length) return scored.slice(0, max).map(s => s.id);
+  const lower = fallback.map(f => f.toLowerCase());
+  return items.filter(i => lower.some(f => i.label.toLowerCase().includes(f))).slice(0, max).map(i => i.id);
 }

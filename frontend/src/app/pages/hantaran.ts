@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -11,12 +12,19 @@ import {
 import { SessionStore } from '../core/session';
 import { Toast } from '../core/ui';
 import { Icon } from '../shared/icon';
-import { Picker, expensePickerItems, taskPickerItems } from '../shared/picker';
+import { Picker, expensePickerItems, suggestLinks, taskPickerItems } from '../shared/picker';
 import { EmptyState, Sheet } from '../shared/ui';
 
 const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 'READY'];
 
 /** Hantaran: what goes on each dulang, who gives it, and links to its cost (Budget) and task (Checklist). */
+/** Usual hantaran gifts, offered while typing an item name. */
+const COMMON_NAMES = [
+  'Cincin', 'Sirih junjung', 'Kain sutera', 'Kain songket', 'Kasut', 'Beg tangan', 'Telekung', 'Sejadah', 'Al-Quran',
+  'Minyak wangi', 'Jam tangan', 'Set alat solek', 'Set penjagaan kulit', 'Coklat', 'Kek', 'Buah-buahan', 'Manisan',
+  'Pakaian', 'Baju Melayu', 'Songkok', 'Dompet', 'Tali leher', 'Wang hantaran', 'Bunga rampai',
+];
+
 @Component({
   selector: 'k-hantaran',
   imports: [ReactiveFormsModule, RouterLink, Icon, EmptyState, Picker, Sheet],
@@ -70,7 +78,8 @@ const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 
       <form id="hantaran-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
         @if (error()) { <div class="sheet-err" role="alert">{{ error() }}</div> }
         <div class="list">
-          <div class="field stack"><label for="h-name">Item</label><input id="h-name" formControlName="name" maxlength="160" placeholder="e.g. Sirih junjung, Cincin, Kain sutera"></div>
+          <div class="field stack"><label for="h-name">Item</label><input id="h-name" formControlName="name" maxlength="160" list="h-names" autocomplete="off" placeholder="e.g. Sirih junjung, Cincin, Kain sutera">
+            <datalist id="h-names">@for (n of commonNames; track n) { <option [value]="n"></option> }</datalist></div>
           <div class="field stack"><span class="lab">Given by</span><div class="seg" role="radiogroup" aria-label="Given by">
             @for (p of partners; track p) { <label><input type="radio" formControlName="giver" [value]="p"><span>{{ names()[p] }}'s side</span></label> }</div></div>
           <div class="field"><label for="h-tray">Dulang number</label><input id="h-tray" type="number" min="1" max="99" formControlName="tray_number" placeholder="e.g. 1"></div>
@@ -82,7 +91,7 @@ const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 
 
         <div class="sec-h"><span>Links</span></div>
         <div class="list">
-          <k-picker label="Budget line" [items]="expenseItems()" [value]="form.controls.expense_id.value || null"
+          <k-picker label="Budget line" [items]="expenseItems()" [value]="form.controls.expense_id.value || null" [suggestions]="expenseSuggestions()"
             emptyText="No budget lines yet. Switch on Add to budget to create one." (changed)="form.controls.expense_id.setValue($event ?? '')" />
           @if (!editing() && !form.controls.expense_id.value) {
             <div class="field"><label for="h-add">Add to budget</label><input id="h-add" type="checkbox" class="toggle" formControlName="create_expense"></div>
@@ -90,7 +99,7 @@ const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 
               <div class="field"><label for="h-plan">Planned (RM)</label><input id="h-plan" inputmode="decimal" formControlName="planned" placeholder="0.00"></div>
             }
           }
-          <k-picker label="Checklist task" [items]="taskItems()" [value]="form.controls.task_id.value || null"
+          <k-picker label="Checklist task" [items]="taskItems()" [value]="form.controls.task_id.value || null" [suggestions]="taskSuggestions()"
             emptyText="No tasks in this checklist yet." (changed)="form.controls.task_id.setValue($event ?? '')" />
         </div>
         @if (editing(); as h) {
@@ -162,6 +171,12 @@ export class Hantaran {
     planned: [''],
     notes: [''],
   });
+  private readonly typedName = toSignal(this.form.controls.name.valueChanges, { initialValue: '' });
+  /** Links that look like this item, offered as one-tap chips while the field is still empty. */
+  protected readonly taskSuggestions = computed(() =>
+    suggestLinks(this.typedName(), this.taskItems(), { fallback: ['hantaran', 'dulang'] }));
+  protected readonly expenseSuggestions = computed(() => suggestLinks(this.typedName(), this.expenseItems()));
+  protected readonly commonNames = COMMON_NAMES;
 
   protected subline(h: HantaranItem): string {
     return [this.names()[h.assignee], h.task_title ? `Task: ${this.taskStatus(h).toLowerCase()}` : '', h.notes.slice(0, 50)]

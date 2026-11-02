@@ -289,7 +289,11 @@ k-picker{display:block;position:relative}
 .list>*+k-picker::before,.list>k-picker+*::before{content:"";position:absolute;top:0;right:0;left:16px;border-top:1px solid var(--hair);z-index:1}
 .picker-field{width:100%;text-align:left}
 .picker-value{flex:1;min-width:0;text-align:right;color:var(--text2);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.picker-value.empty{color:var(--text3)}
+.picker-value.is-empty{color:var(--text3)}
+.picker-suggest{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 16px 12px}
+.picker-suggest>span{font-size:12px;font-weight:600;color:var(--text2);margin-right:2px}
+.picker-suggest .chip{display:inline-flex;align-items:center;gap:5px;font-size:13px;min-height:30px;padding:4px 11px;background:var(--tint);color:var(--accent-ink);max-width:100%;text-align:left}
+.picker-suggest .chip k-icon{flex:none}
 .picker-chev{color:var(--text3);transition:transform .18s}
 .picker-chev.down{transform:rotate(90deg)}
 .picker{border-top:1px solid var(--hair);padding:8px;max-height:360px;overflow:auto;display:grid;gap:2px}

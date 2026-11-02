@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Task } from '../core/models';
-import { Picker, PickerItem, taskPickerItems } from './picker';
+import { Picker, PickerItem, suggestLinks, taskPickerItems } from './picker';
 
 const ITEMS: PickerItem[] = [
   { id: 'p1', label: 'Berbincang tentang tarikh pertunangan yang sesuai.', group: 'Perbincangan & keluarga', hint: 'Done · Both' },
@@ -86,5 +86,39 @@ describe('taskPickerItems', () => {
       ['talk', 'Perbincangan & keluarga'], ['ring', 'Cincin & hantaran'], ['late', 'Semakan akhir'], ['misc', 'Lain-lain'],
     ]);
     expect(items[0].hint).toBe('Not started · Both');
+  });
+});
+
+describe('suggestLinks', () => {
+  it('matches the item name against task and budget wording', () => {
+    expect(suggestLinks('Cincin', ITEMS)).toEqual(['c1']);
+    expect(suggestLinks('Cincin', [{ id: 'e1', label: 'Hantaran: Cincin' }, { id: 'e2', label: 'Hantaran: Kasut' }])).toEqual(['e1']);
+  });
+
+  it('ignores filler words, and falls back to general tasks when nothing matches', () => {
+    expect(suggestLinks('Hantaran dan', ITEMS)).toEqual([]);
+    expect(suggestLinks('Telekung', ITEMS, { fallback: ['hantaran'] })).toEqual(['c2', 'c3']);
+    expect(suggestLinks('', ITEMS, { fallback: ['hantaran'], max: 1 })).toEqual(['c2']);
+  });
+});
+
+describe('Picker suggestions', () => {
+  it('offers suggested items as chips while empty, and links on tap', () => {
+    const { fixture, el, chosen } = render(null);
+    fixture.componentRef.setInput('suggestions', ['c1', 'missing']);
+    fixture.detectChanges();
+    const chips = el.querySelectorAll<HTMLButtonElement>('.picker-suggest .chip');
+    expect(chips.length).toBe(1);
+    expect(chips[0].textContent).toContain('Memilih cincin');
+    chips[0].click();
+    expect(chosen).toEqual(['c1']);
+  });
+
+  it('hides suggestions once something is linked', () => {
+    const { fixture, el } = render('s1');
+    fixture.componentRef.setInput('suggestions', ['c1']);
+    fixture.detectChanges();
+    expect(el.querySelector('.picker-suggest')).toBeNull();
+    expect(el.querySelector('.picker-value')!.classList.contains('empty')).toBe(false);
   });
 });
