@@ -1,4 +1,5 @@
 """Verify Supabase Auth access tokens sent as `Authorization: Bearer <token>`."""
+import logging
 import uuid
 from dataclasses import dataclass
 from functools import lru_cache
@@ -10,6 +11,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.config import Settings, get_settings
 
 bearer = HTTPBearer(auto_error=False)
+logger = logging.getLogger("kita")
 
 
 @dataclass(frozen=True)
@@ -42,10 +44,13 @@ def decode_token(token: str, settings: Settings) -> AuthUser:
             algorithms = ["ES256", "RS256"]
         options = {"require": ["exp", "sub"]}
         issuer = f"{settings.supabase_url.rstrip('/')}/auth/v1" if settings.supabase_url else None
+        # A little leeway for clock differences between Supabase and this server.
         claims = jwt.decode(token, key, algorithms=algorithms, audience=settings.jwt_audience,
-                            issuer=issuer, options=options)
+                            issuer=issuer, options=options, leeway=30)
         return AuthUser(id=uuid.UUID(claims["sub"]), email=claims.get("email"))
     except (jwt.PyJWTError, ValueError) as exc:
+        # Say why in the logs (never the token), so a rejected sign-in can be diagnosed.
+        logger.warning("Rejected sign-in token: %s: %s", type(exc).__name__, str(exc)[:160])
         raise _unauthorized("Your session has expired or is not valid. Please sign in again.") from exc
 
 

@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { errorMessage } from './api';
 import { AuthService } from './auth';
 import { SessionStore } from './session';
 
@@ -22,8 +24,12 @@ export const memberGuard: CanActivateFn = async () => {
   if (!auth.signedIn()) return router.parseUrl('/login');
   try {
     await session.load();
-  } catch {
-    return router.parseUrl('/login');
+  } catch (error) {
+    // Only a rejected session means "sign in again"; anything else (server or network trouble)
+    // gets an explanation and a retry instead of a confusing trip back to the sign-in page.
+    if (error instanceof HttpErrorResponse && error.status === 401) return router.parseUrl('/login');
+    session.loadError.set(errorMessage(error));
+    return router.parseUrl('/unavailable');
   }
   return session.me()?.membership ? true : router.parseUrl('/not-invited');
 };

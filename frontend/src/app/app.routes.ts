@@ -18,6 +18,7 @@ const modePages: Routes = [
 export const routes: Routes = [
   { path: 'login', title: 'Sign in · kita.', canActivate: [signedOutGuard], loadComponent: () => import('./pages/auth').then(m => m.Login) },
   { path: 'set-password', title: 'Set your password · kita.', loadComponent: () => import('./pages/auth').then(m => m.SetPassword) },
+  { path: 'unavailable', title: 'kita.', loadComponent: () => import('./pages/auth').then(m => m.Unavailable) },
   { path: 'not-invited', title: 'kita.', canActivate: [signedInGuard], loadComponent: () => import('./pages/auth').then(m => m.NotInvited) },
   {
     path: '',

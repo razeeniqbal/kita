@@ -10,6 +10,8 @@ export class SessionStore {
 
   readonly me = signal<Me | null>(null);
   readonly workspace = signal<WorkspaceDetail | null>(null);
+  /** Why the session could not be loaded, shown on the /unavailable page. */
+  readonly loadError = signal('');
 
   readonly eventIds = computed(() => {
     const ids: Partial<Record<Mode, string>> = {};

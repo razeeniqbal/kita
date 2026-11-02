@@ -181,3 +181,38 @@ export class NotInvited {
     await this.router.navigateByUrl('/login');
   }
 }
+
+@Component({
+  selector: 'k-unavailable',
+  imports: [Emblem, Icon],
+  template: `
+    <main class="auth">
+      <div class="auth-card">
+        <k-emblem [size]="72" />
+        <h1>Couldn't load kita.</h1>
+        <p class="sub" style="margin-inline:auto">{{ session.loadError() || 'Something went wrong while loading your plan.' }}
+          You're still signed in; nothing was lost.</p>
+        <div class="alt">
+          <button type="button" class="btn" (click)="retry()">Try again</button>
+          <button type="button" class="link-btn" (click)="signOut()"><k-icon name="log-out" [size]="16" /> Sign out</button>
+        </div>
+      </div>
+    </main>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Unavailable {
+  protected readonly session = inject(SessionStore);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  protected async retry(): Promise<void> {
+    this.session.reset();
+    await this.router.navigateByUrl('/');
+  }
+
+  protected async signOut(): Promise<void> {
+    await this.auth.signOut();
+    this.session.reset();
+    await this.router.navigateByUrl('/login');
+  }
+}
