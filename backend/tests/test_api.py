@@ -276,6 +276,57 @@ def test_vendor_contact_is_shared_but_bookings_are_per_mode(client, world, pg):
     assert pg.execute("select count(*) from kita.vendors").fetchone()[0] == 0
 
 
+def test_hantaran_links_to_budget_and_checklist(client, world, pg):
+    razeen = auth(world.razeen)
+    pg.execute("insert into kita.budget_categories (planning_event_id, name) values (%s, 'Hantaran & dulang')", (world.tunang,))
+    task = add_task(client, world, world.tunang, title="Menyediakan senarai barang hantaran.")
+    made = client.post(url(world.tunang, "/hantaran"), headers=razeen, json={
+        "name": "Sirih junjung", "giver": "PARTNER_1", "tray_number": 1, "task_id": task["id"],
+        "create_expense": True, "planned_sen": 50_000})
+    assert made.status_code == 201, made.text
+    client.post(url(world.tunang, "/hantaran"), headers=razeen, json={"name": "Kek", "giver": "PARTNER_2", "tray_number": 1, "status": "READY"})
+    client.post(url(world.tunang, "/hantaran"), headers=razeen, json={"name": "Coklat", "giver": "PARTNER_2", "tray_number": 2})
+
+    expense_id = made.json()["expense_id"]
+    expense = client.get(url(world.tunang, f"/expenses/{expense_id}"), headers=razeen).json()
+    assert expense["name"] == "Hantaran: Sirih junjung" and expense["planned_sen"] == 50_000 and expense["category_id"]
+    client.patch(url(world.tunang, f"/expenses/{expense_id}"), json={"version": expense["version"], "committed_sen": 45_000}, headers=razeen)
+    assert pay(client, world, world.tunang, expense_id, 20_000).status_code == 201
+
+    data = client.get(url(world.tunang, "/hantaran"), headers=razeen).json()
+    sirih = next(i for i in data["items"] if i["name"] == "Sirih junjung")
+    assert sirih["task_title"] == "Menyediakan senarai barang hantaran." and sirih["task_status"] == "NOT_STARTED"
+    assert (sirih["planned_sen"], sirih["committed_sen"], sirih["paid_sen"]) == (50_000, 45_000, 20_000)
+    s = data["summary"]
+    assert s["sides"]["PARTNER_1"] == {"items": 1, "trays": 1, "ready": 0}
+    assert s["sides"]["PARTNER_2"] == {"items": 2, "trays": 2, "ready": 1}
+    assert (s["planned_sen"], s["paid_sen"]) == (50_000, 20_000)
+
+    # Deleting the expense keeps the item and just drops the link.
+    client.delete(url(world.tunang, f"/expenses/{expense_id}"), headers=razeen)
+    assert client.get(url(world.tunang, f"/hantaran/{sirih['id']}"), headers=razeen).json()["expense_id"] is None
+
+
+def test_hantaran_cannot_link_to_the_other_mode(client, world):
+    razeen = auth(world.razeen)
+    other_cost = add_expense(client, world, world.perkahwinan)
+    other_task = add_task(client, world, world.perkahwinan)
+    for link in ({"expense_id": other_cost["id"]}, {"task_id": other_task["id"]}):
+        r = client.post(url(world.tunang, "/hantaran"), json={"name": "Cincin", **link}, headers=razeen)
+        assert r.status_code == 422, r.text
+    assert client.post(url(world.tunang, "/hantaran"), json={"name": "Cincin", "giver": "BOTH"},
+                       headers=razeen).status_code == 422
+
+
+def test_moving_a_task_releases_its_hantaran_link(client, world):
+    razeen = auth(world.razeen)
+    task = add_task(client, world, world.tunang)
+    item = client.post(url(world.tunang, "/hantaran"), json={"name": "Cincin", "task_id": task["id"]}, headers=razeen).json()
+    moved = client.post(url(world.tunang, f"/tasks/{task['id']}/move"), json={"version": task["version"]}, headers=razeen)
+    assert moved.status_code == 200, moved.text
+    assert client.get(url(world.tunang, f"/hantaran/{item['id']}"), headers=razeen).json()["task_id"] is None
+
+
 def test_unknown_or_invalid_ids_and_fields(client, world):
     razeen = auth(world.razeen)
     assert client.get(url(world.tunang, f"/tasks/{uuid.uuid4()}"), headers=razeen).status_code == 404

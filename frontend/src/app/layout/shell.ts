@@ -8,13 +8,14 @@ import { SessionStore } from '../core/session';
 import { Emblem } from '../shared/art';
 import { Icon, IconName } from '../shared/icon';
 
-interface NavItem { page: string; label: string; short: string; icon: IconName; }
+interface NavItem { page: string; label: string; short: string; icon: IconName; tab?: boolean; }
 
 const PAGES: NavItem[] = [
-  { page: '', label: 'Overview', short: 'Overview', icon: 'house' },
-  { page: 'checklist', label: 'Checklist', short: 'Checklist', icon: 'list-checks' },
-  { page: 'budget', label: 'Budget', short: 'Budget', icon: 'wallet' },
-  { page: 'calendar', label: 'Calendar', short: 'Calendar', icon: 'calendar-days' },
+  { page: '', label: 'Overview', short: 'Overview', icon: 'house', tab: true },
+  { page: 'checklist', label: 'Checklist', short: 'Checklist', icon: 'list-checks', tab: true },
+  { page: 'budget', label: 'Budget', short: 'Budget', icon: 'wallet', tab: true },
+  { page: 'hantaran', label: 'Hantaran', short: 'Hantaran', icon: 'gift' },
+  { page: 'calendar', label: 'Calendar', short: 'Calendar', icon: 'calendar-days', tab: true },
   { page: 'guests', label: 'Guests', short: 'Guests', icon: 'users' },
   { page: 'vendors', label: 'Vendors', short: 'Vendors', icon: 'store' },
   { page: 'documents', label: 'Documents', short: 'Documents', icon: 'folder-lock' },
@@ -66,7 +67,7 @@ const PAGES: NavItem[] = [
 
     <div class="bottom">
       <nav aria-label="Sections">
-        @for (p of pages.slice(0, 4); track p.page) {
+        @for (p of tabPages; track p.page) {
           <a [routerLink]="pageLink(p)" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }">
             <k-icon [name]="p.icon" [size]="24" /><span>{{ p.short }}</span></a>
         }
@@ -80,7 +81,7 @@ const PAGES: NavItem[] = [
         <button type="button" class="r" (click)="menuOpen.set(false)">Done</button></div>
       <div class="list menu">
         <a class="nav-i" routerLink="/"><k-icon name="heart" /><span>Our journey</span></a>
-        @for (p of pages.slice(4); track p.page) {
+        @for (p of morePages; track p.page) {
           <a class="nav-i" [routerLink]="pageLink(p)"><k-icon [name]="p.icon" /><span>{{ p.label }}</span></a>
         }
         <a class="nav-i" routerLink="/activity"><k-icon name="activity" /><span>Activity</span></a>
@@ -93,6 +94,8 @@ export class Shell {
   protected readonly mode = inject(ModeService);
   private readonly session = inject(SessionStore);
   protected readonly pages = PAGES;
+  protected readonly tabPages = PAGES.filter(p => p.tab);
+  protected readonly morePages = PAGES.filter(p => !p.tab);
   protected readonly modeLinks: { slug: ModeSlug; label: string }[] = [
     { slug: 'tunang', label: MODES.TUNANG.label }, { slug: 'perkahwinan', label: MODES.PERKAHWINAN.label },
   ];
@@ -101,7 +104,7 @@ export class Shell {
   protected readonly modeLabel = computed(() => MODES[this.mode.mode()].label);
   protected readonly initial = computed(() => (this.session.myName() ?? '?').charAt(0).toUpperCase());
   protected readonly moreActive = computed(() =>
-    ['guests', 'vendors', 'documents', 'notes'].includes(this.mode.page()) || (!this.mode.routeSlug() && !this.mode.onHome()));
+    this.morePages.some(p => p.page === this.mode.page()) || (!this.mode.routeSlug() && !this.mode.onHome()));
 
   protected pageLink(p: NavItem): string[] {
     return p.page ? ['/', this.mode.slug(), p.page] : ['/', this.mode.slug()];

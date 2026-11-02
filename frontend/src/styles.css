@@ -45,6 +45,9 @@ body{color:var(--text);font-family:var(--font);font-size:16px;line-height:1.45;-
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--bg)}
 button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0;padding:0;text-align:inherit}
+/* Windows browsers paint a <select>'s open list with the field's own (translucent or empty) background,
+   which left light text on a pale list in dark mode. Give options solid theme colours. */
+option,optgroup{background-color:var(--surface);color:var(--text)}
 button:disabled{cursor:default}
 a{color:var(--accent-ink)}
 :focus-visible{outline:3px solid color-mix(in srgb,var(--accent-ink) 60%,transparent);outline-offset:2px;border-radius:10px}

@@ -24,6 +24,7 @@ invitation_status = _enum("invitation_status", "NOT_INVITED", "INVITED")
 rsvp_status = _enum("rsvp_status", "PENDING", "ATTENDING", "DECLINED")
 calendar_type = _enum("calendar_type", "APPOINTMENT", "VENUE_VISIT", "FAMILY_DISCUSSION", "FITTING", "PAYMENT", "OTHER")
 document_kind = _enum("document_kind", "QUOTATION", "RECEIPT", "AGREEMENT", "PAPERWORK", "OTHER")
+hantaran_status = _enum("hantaran_status", "PLANNED", "BUYING", "BOUGHT", "DECORATED", "READY")
 
 
 def _id() -> Column:
@@ -135,6 +136,15 @@ documents = Table(
     "documents", metadata, _id(), _event_id(),
     Column("name", Text), Column("kind", document_kind), Column("storage_path", Text),
     Column("content_type", Text), Column("size_bytes", BigInteger),
+    *_stamps(),
+)
+
+hantaran_items = Table(
+    "hantaran_items", metadata, _id(), _event_id(),
+    Column("name", Text), Column("giver", family_side), Column("tray_number", SmallInteger),
+    Column("status", hantaran_status), Column("assignee", assignee),
+    Column("expense_id", UUID(as_uuid=True)), Column("task_id", UUID(as_uuid=True)),
+    Column("notes", Text), Column("sort_order", Integer),
     *_stamps(),
 )
 

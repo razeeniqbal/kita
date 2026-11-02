@@ -107,6 +107,24 @@ export interface Note extends Versioned { planning_event_id: string; title: stri
 export interface DocumentRecord extends Versioned {
   planning_event_id: string; name: string; kind: DocumentKind; storage_path: string; content_type: string; size_bytes: number;
 }
+export type HantaranStatus = 'PLANNED' | 'BUYING' | 'BOUGHT' | 'DECORATED' | 'READY';
+export const HANTARAN_STATUS_LABEL: Record<HantaranStatus, string> = {
+  PLANNED: 'Planned', BUYING: 'Buying', BOUGHT: 'Bought', DECORATED: 'Gubahan done', READY: 'Ready',
+};
+export interface HantaranItem extends Versioned {
+  planning_event_id: string; name: string; giver: Partner; tray_number: number | null; status: HantaranStatus;
+  assignee: Assignee; expense_id: string | null; task_id: string | null; notes: string; sort_order: number;
+  expense_name: string | null; planned_sen: number | null; committed_sen: number | null; paid_sen: number;
+  task_title: string | null; task_status: TaskStatus | null;
+}
+export interface HantaranList {
+  items: HantaranItem[];
+  summary: {
+    sides: Record<Partner, { items: number; trays: number; ready: number }>;
+    items: number; ready: number; planned_sen: number; committed_sen: number; paid_sen: number;
+  };
+}
+
 export interface Activity {
   id: number; planning_event_id: string | null; actor_user_id: string | null; action: string; entity_type: string;
   entity_id: string | null; summary: string; created_at: string;

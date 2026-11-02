@@ -5,7 +5,7 @@ import { filter, map } from 'rxjs';
 import { MODE_OF, Mode, ModeSlug } from './models';
 import { SessionStore } from './session';
 
-const PAGES = ['', 'checklist', 'budget', 'calendar', 'guests', 'vendors', 'documents', 'notes'] as const;
+const PAGES = ['', 'checklist', 'budget', 'hantaran', 'calendar', 'guests', 'vendors', 'documents', 'notes'] as const;
 export type ModePage = (typeof PAGES)[number];
 
 function read(key: string): string | null {

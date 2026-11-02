@@ -223,6 +223,39 @@ class NoteUpdate(Body):
     pinned: bool | None = None
 
 
+HantaranStatus = Literal["PLANNED", "BUYING", "BOUGHT", "DECORATED", "READY"]
+Giver = Literal["PARTNER_1", "PARTNER_2"]
+TrayNumber = Annotated[int, Field(ge=1, le=99)]
+
+
+class HantaranCreate(Body):
+    name: Name(160)
+    giver: Giver = "PARTNER_1"
+    tray_number: TrayNumber | None = None
+    status: HantaranStatus = "PLANNED"
+    assignee: Assignee = "UNASSIGNED"
+    expense_id: uuid.UUID | None = None
+    task_id: uuid.UUID | None = None
+    notes: Text = ""
+    sort_order: int = 0
+    # Convenience: also create a budget line in the Hantaran category and link it.
+    create_expense: bool = False
+    planned_sen: Sen = 0
+
+
+class HantaranUpdate(Body):
+    version: Version
+    name: Name(160) | None = None
+    giver: Giver | None = None
+    tray_number: TrayNumber | None = None
+    status: HantaranStatus | None = None
+    assignee: Assignee | None = None
+    expense_id: uuid.UUID | None = None
+    task_id: uuid.UUID | None = None
+    notes: Text | None = None
+    sort_order: int | None = None
+
+
 class DocumentUpdate(Body):
     version: Version
     name: Name(200) | None = None

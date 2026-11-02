@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, input } from '@angular/core';
 import {
   Activity, ArrowLeftRight, Bell, Calendar, CalendarDays, CalendarPlus, Check, ChevronRight, Clock, CloudOff, Copy,
-  Ellipsis, Eye, FileText, Flag, FolderLock, Gem, Heart, HeartHandshake, House, IconNode, KeyRound, Link, ListChecks,
+  Ellipsis, Eye, FileText, Flag, FolderLock, Gem, Gift, Heart, HeartHandshake, House, IconNode, KeyRound, Link, ListChecks,
   Lock, LogOut, Mail, MapPin, NotebookPen, Pause, Pencil, Pin, Plus, Search, Settings, ShieldCheck, Shirt, Store,
   Trash2, Upload, User, UserRound, Users, Wallet, Wifi, X,
 } from 'lucide';
@@ -10,7 +10,7 @@ import {
 const ICONS = {
   activity: Activity, 'arrow-left-right': ArrowLeftRight, bell: Bell, calendar: Calendar, 'calendar-days': CalendarDays,
   'calendar-plus': CalendarPlus, check: Check, 'chevron-right': ChevronRight, clock: Clock, 'cloud-off': CloudOff,
-  copy: Copy, ellipsis: Ellipsis, eye: Eye, 'file-text': FileText, flag: Flag, 'folder-lock': FolderLock, gem: Gem,
+  copy: Copy, ellipsis: Ellipsis, eye: Eye, 'file-text': FileText, flag: Flag, 'folder-lock': FolderLock, gem: Gem, gift: Gift,
   heart: Heart, 'heart-handshake': HeartHandshake, house: House, 'key-round': KeyRound, link: Link,
   'list-checks': ListChecks, lock: Lock, 'log-out': LogOut, mail: Mail, 'map-pin': MapPin, 'notebook-pen': NotebookPen,
   pause: Pause, pencil: Pencil, pin: Pin, plus: Plus, search: Search, settings: Settings, 'shield-check': ShieldCheck,

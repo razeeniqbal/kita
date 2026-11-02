@@ -7,6 +7,7 @@ const modePages: Routes = [
   { path: '', title: 'Overview · kita.', loadComponent: () => import('./pages/overview').then(m => m.Overview) },
   { path: 'checklist', title: 'Checklist · kita.', loadComponent: () => import('./pages/checklist').then(m => m.Checklist) },
   { path: 'budget', title: 'Budget · kita.', loadComponent: () => import('./pages/budget').then(m => m.Budget) },
+  { path: 'hantaran', title: 'Hantaran · kita.', loadComponent: () => import('./pages/hantaran').then(m => m.Hantaran) },
   { path: 'calendar', title: 'Calendar · kita.', loadComponent: () => import('./pages/calendar').then(m => m.CalendarPage) },
   { path: 'guests', title: 'Guests · kita.', loadComponent: () => import('./pages/guests').then(m => m.Guests) },
   { path: 'vendors', title: 'Vendors · kita.', loadComponent: () => import('./pages/vendors').then(m => m.Vendors) },

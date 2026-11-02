@@ -24,6 +24,7 @@ Schema for the Supabase PostgreSQL 17 project, based on section 9 of [`spec-v1.2
 | `guests` | event | Family side, group, invitation, RSVP, seats |
 | `notes` | event | Decisions and inspiration links, can be pinned |
 | `documents` | event | Metadata for files in private Supabase Storage |
+| `hantaran_items` | event | Items on each dulang: giving side, tray number, status; optional link to an expense and a task in the same mode (migration `20261102090000_hantaran.sql`) |
 | `activity_log` | workspace | Append-only record of who changed what |
 
 ## Decisions to review

@@ -2,7 +2,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.engine import Connection
 
 from app.crud import as_dict, log, update_versioned
@@ -11,7 +11,7 @@ from app.deps import Event, Member, get_event, get_member
 from app.routers.factory import register_crud
 from app.schemas import Assignee, TaskCreate, TaskStatus, TaskUpdate, VersionOnly
 from app.summaries import MODE_LABEL
-from app.tables import planning_events, tasks
+from app.tables import hantaran_items, planning_events, tasks
 
 router = APIRouter(prefix="/planning-events/{event_id}/tasks", tags=["tasks"])
 
@@ -53,6 +53,9 @@ def move_task(item_id: uuid.UUID, body: VersionOnly, event: Event = Depends(get_
         planning_events.c.workspace_id == event.workspace_id, planning_events.c.mode != event.mode)).first()
     if target is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "The other planning mode has not been set up yet.")
+    # Hantaran items in this mode may point at the task; links never cross modes, so release them.
+    db.execute(update(hantaran_items).where(hantaran_items.c.task_id == item_id,
+                                            hantaran_items.c.planning_event_id == event.id).values(task_id=None))
     row = update_versioned(
         db, tasks, [tasks.c.planning_event_id == event.id], item_id, body.version,
         {"planning_event_id": target.id, "moved_from_event_id": event.id, "expense_id": None, "category": "Lain-lain"},
