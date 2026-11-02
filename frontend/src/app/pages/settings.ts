@@ -1,18 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api, errorMessage } from '../core/api';
 import { AuthService } from '../core/auth';
 import { MODES, Mode } from '../core/models';
+import { PushPrefs, PushService } from '../core/push';
 import { SessionStore } from '../core/session';
 import { Theme, ThemeService, Toast } from '../core/ui';
 import { EventSheet } from '../shared/event-sheet';
 import { Icon, IconName } from '../shared/icon';
-import { Sheet } from '../shared/ui';
+import { Notice, Sheet } from '../shared/ui';
 
 @Component({
   selector: 'k-settings',
-  imports: [ReactiveFormsModule, EventSheet, Icon, Sheet],
+  imports: [ReactiveFormsModule, EventSheet, Icon, Notice, Sheet],
   template: `
     <div class="ph"><div class="ph-t"><div class="eyebrow">Shared</div><h1>Settings</h1><p class="sub">These apply to both modes.</p></div></div>
 
@@ -34,6 +36,37 @@ import { Sheet } from '../shared/ui';
     <div class="list"><div class="row"><div class="seg" style="flex:1" role="group" aria-label="Appearance">
       @for (t of themes; track t.key) { <button type="button" [attr.aria-pressed]="theme.theme() === t.key" (click)="theme.set(t.key)">{{ t.label }}</button> }
     </div></div></div>
+
+    <div class="sec-h">Notifications on this device</div>
+    @switch (push.state()) {
+      @case ('install-first') {
+        <k-notice icon="share">To get notifications on iPhone, add kita. to your Home Screen: tap <b>Share</b>, then
+          <b>Add to Home Screen</b>. Open kita. from there and come back to this page.</k-notice>
+      }
+      @case ('unsupported') { <k-notice icon="bell-off">This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.</k-notice> }
+      @case ('blocked') {
+        <k-notice icon="bell-off">Notifications are blocked for kita. Allow them in this browser's site settings
+          (or your phone's notification settings), then reload.</k-notice>
+      }
+      @case ('server-off') { <k-notice icon="bell-off">Notifications aren't set up on the server yet.</k-notice> }
+      @case ('loading') { <div class="list"><div class="row"><div class="row-main"><span class="s">Checking…</span></div></div></div> }
+      @case ('off') {
+        <div class="list">
+          <button type="button" class="row-btn" (click)="enable()" [disabled]="push.busy()"><k-icon name="bell" [size]="18" />Turn on notifications</button>
+        </div>
+        <p class="sheet-meta">Hear when {{ partnerName() }} adds or completes something, and get a short summary each morning.</p>
+      }
+      @case ('on') {
+        <div class="list">
+          <div class="field"><label for="n-partner">When {{ partnerName() }} adds or completes something</label>
+            <input id="n-partner" type="checkbox" class="toggle" [checked]="push.prefs()?.partner_updates" (change)="setPref('partner_updates', $event)"></div>
+          <div class="field"><label for="n-daily">Morning summary at 8 AM</label>
+            <input id="n-daily" type="checkbox" class="toggle" [checked]="push.prefs()?.daily_digest" (change)="setPref('daily_digest', $event)"></div>
+          <button type="button" class="row-btn" (click)="sendTest()" [disabled]="push.busy()"><k-icon name="send" [size]="18" />Send a test notification</button>
+          <button type="button" class="row-btn" (click)="disable()" [disabled]="push.busy()"><k-icon name="bell-off" [size]="18" />Turn off on this device</button>
+        </div>
+      }
+    }
 
     <div class="sec-h">Account</div>
     <div class="list">
@@ -67,9 +100,10 @@ import { Sheet } from '../shared/ui';
     <k-event-sheet [open]="!!editingMode()" [eventId]="editingEventId()" [mode]="editingMode() ?? 'TUNANG'" (closed)="editingMode.set(null)" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsPage {
+export class SettingsPage implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  protected readonly push = inject(PushService);
   private readonly session = inject(SessionStore);
   private readonly api = inject(Api);
   private readonly toast = inject(Toast);
@@ -77,6 +111,8 @@ export class SettingsPage {
 
   protected readonly names = this.session.names;
   protected readonly myName = computed(() => this.session.myName() ?? 'a member');
+  protected readonly partnerName = computed(() =>
+    this.session.myPartner() === 'PARTNER_2' ? this.names().PARTNER_1 : this.names().PARTNER_2);
   protected readonly modes: { mode: Mode; slug: string; label: string; icon: IconName }[] = [
     { mode: 'TUNANG', slug: 'tunang', label: MODES.TUNANG.label, icon: 'gem' },
     { mode: 'PERKAHWINAN', slug: 'perkahwinan', label: MODES.PERKAHWINAN.label, icon: 'heart-handshake' },
@@ -93,6 +129,45 @@ export class SettingsPage {
   protected readonly busy = signal(false);
   protected readonly error = signal('');
   protected readonly form = inject(NonNullableFormBuilder).group({ partner_1_name: [''], partner_2_name: [''] });
+
+  ngOnInit(): void {
+    void this.push.init();
+  }
+
+  protected async enable(): Promise<void> {
+    try {
+      await this.push.enable();
+      if (this.push.state() === 'on') this.toast.show('Notifications are on');
+    } catch (e) {
+      this.toast.show(e instanceof HttpErrorResponse ? errorMessage(e) : "Couldn't turn on notifications on this device");
+    }
+  }
+
+  protected async disable(): Promise<void> {
+    try {
+      await this.push.disable();
+      this.toast.show('Notifications are off on this device');
+    } catch (e) {
+      this.toast.show(errorMessage(e));
+    }
+  }
+
+  protected async setPref(key: keyof PushPrefs, event: Event): Promise<void> {
+    try {
+      await this.push.setPref(key, (event.target as HTMLInputElement).checked);
+    } catch (e) {
+      this.toast.show(errorMessage(e));
+    }
+  }
+
+  protected async sendTest(): Promise<void> {
+    try {
+      await this.push.test();
+      this.toast.show('Sent. It should arrive in a few seconds');
+    } catch (e) {
+      this.toast.show(errorMessage(e));
+    }
+  }
 
   protected openNames(): void {
     const ws = this.session.workspace()!;

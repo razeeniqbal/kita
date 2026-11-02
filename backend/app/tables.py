@@ -156,3 +156,11 @@ activity_log = Table(
     Column("entity_id", UUID(as_uuid=True)), Column("summary", Text),
     Column("created_at", DateTime(timezone=True)),
 )
+
+push_subscriptions = Table(
+    "push_subscriptions", metadata, _id(),
+    Column("workspace_id", UUID(as_uuid=True)), Column("user_id", UUID(as_uuid=True)),
+    Column("endpoint", Text), Column("p256dh", Text), Column("auth", Text),
+    Column("partner_updates", Boolean), Column("daily_digest", Boolean),
+    Column("created_at", DateTime(timezone=True)), Column("last_sent_at", DateTime(timezone=True)),
+)

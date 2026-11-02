@@ -23,8 +23,17 @@ class Settings(BaseSettings):
     # Vercel sets VERCEL=1. Serverless functions should not keep a connection pool.
     vercel: bool = False
     cors_origins: list[str] = []
+    # Web push (VAPID). Generate a pair with scripts/generate_vapid_keys.py. Without them the app
+    # still works; it just can't send notifications.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    # Contact for the push services: a mailto: address or the site URL.
+    vapid_subject: str = "https://kita.madebyrazeen.com"
+    # Vercel sends "Authorization: Bearer <CRON_SECRET>" with each scheduled call.
+    cron_secret: str = ""
 
-    @field_validator("database_url", "supabase_url", "supabase_anon_key", "supabase_jwt_secret", mode="before")
+    @field_validator("database_url", "supabase_url", "supabase_anon_key", "supabase_jwt_secret",
+                     "vapid_public_key", "vapid_private_key", "vapid_subject", "cron_secret", mode="before")
     @classmethod
     def _trim(cls, value):
         # Values pasted into a dashboard often pick up a trailing space or line break.

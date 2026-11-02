@@ -262,6 +262,26 @@ class DocumentUpdate(Body):
     kind: DocumentKind | None = None
 
 
+# Push notifications --------------------------------------------------------------------------------
+
+class PushKeys(Body):
+    p256dh: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+    auth: Annotated[str, StringConstraints(min_length=1, max_length=100)]
+
+
+class PushSubscription(Body):
+    """The browser's PushSubscription.toJSON(), plus this device's choices when they change."""
+    endpoint: Annotated[str, StringConstraints(min_length=1, max_length=1000)]
+    keys: PushKeys
+    expirationTime: int | None = None   # noqa: N815 - the browser's own field name
+    partner_updates: bool | None = None
+    daily_digest: bool | None = None
+
+
+class PushEndpoint(Body):
+    endpoint: Annotated[str, StringConstraints(min_length=1, max_length=1000)]
+
+
 def changes(body: BaseModel) -> dict:
     """Fields the client actually sent, without the version."""
     return body.model_dump(exclude_unset=True, exclude={"version"})

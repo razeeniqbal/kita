@@ -30,6 +30,9 @@ In the [Supabase dashboard](https://supabase.com/dashboard) for the project:
    | `DATABASE_URL` | Transaction pooler URL, e.g. `postgresql://postgres.<project-ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require` |
    | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
    | `SUPABASE_ANON_KEY` | The anon / publishable key |
+   | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web push keys from `python scripts/generate_vapid_keys.py`. Optional: without them notifications are simply off |
+   | `VAPID_SUBJECT` | `https://kita.madebyrazeen.com` (contact address the push services see) |
+   | `CRON_SECRET` | Any long random string. Vercel Cron sends it to `/api/v1/cron/daily` each morning |
 
 4. **Deploy.** When it finishes, open `https://<your-app>.vercel.app/api/v1/health`. It should show `{"status":"ok"}`, which means the API reached the database.
 5. Optional: **Settings → Domains** to add your own domain.
@@ -58,6 +61,16 @@ Supabase → **Authentication → URL Configuration**:
    ```
 
 4. Sign in again. You're in.
+
+## 5. Notifications (optional)
+
+kita. is a PWA: it can be installed to the Home Screen and send push notifications.
+
+- **What it sends:** a notification when your partner adds or completes something (tasks, costs, payments, hantaran, calendar, guests, vendors, notes), and a **morning summary at 8 AM** (tasks due, today's appointments, balances due). Each device chooses in **Settings → Notifications on this device**.
+- **Server side:** the four `VAPID_*` / `CRON_SECRET` variables above, and the `crons` entry in `vercel.json` (00:00 UTC = 8 AM Malaysia). On Vercel's free plan a daily cron can run any time within that hour.
+- **iPhone / iPad (iOS 16.4+):** open kita. in Safari, tap **Share → Add to Home Screen**, open it from the Home Screen, then turn notifications on in Settings. Safari tabs can't receive push.
+- **Android, Windows, Mac:** turn them on in Settings in the browser; installing is optional.
+- Changing the VAPID keys later means every device has to turn notifications on again.
 
 ## After that
 

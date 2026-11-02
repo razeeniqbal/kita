@@ -8,6 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import Table, delete, insert, select, update
 from sqlalchemy.engine import Connection
 
+from app import push
 from app.deps import Event, Member
 from app.tables import activity_log
 
@@ -72,3 +73,5 @@ def log(db: Connection, member: Member, event_id: uuid.UUID | None, action: str,
         workspace_id=member.workspace_id, planning_event_id=event_id, actor_user_id=member.user_id,
         action=action, entity_type=entity_type, entity_id=entity_id, summary=summary,
     ))
+    push.queue(db, push.Change(member.workspace_id, member.user_id, member.partner_slot, event_id,
+                               action, entity_type, summary))

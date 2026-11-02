@@ -6,6 +6,7 @@ Reads the original PNGs in assets/source/ (never modified) and writes WebP copie
 The brand heart gets extra treatment:
   * brand-heart-*.webp       cropped around the emblem, flat background made transparent
   * brand-heart-dark-*.webp  same, with the graphite ribbon lifted to ivory for dark mode
+  * icons/*.png              home-screen app icons and the notification badge (PWA manifest)
 
 Usage (from the repo root):
     pip install pillow
@@ -19,6 +20,8 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "source")
 OUT = os.path.join(ROOT, "frontend", "public", "assets", "kita")
+ICONS = os.path.join(ROOT, "frontend", "public", "icons")
+ICON_BG = (250, 249, 246)           # the app's light background, --bg
 WIDTHS = (480, 960)
 
 # Source filename -> output base name.
@@ -77,6 +80,33 @@ def dark_heart(im):
     return im
 
 
+def app_icons(heart):
+    """Home-screen icons on ivory, a padded maskable one, and a white badge for Android's status bar."""
+    os.makedirs(ICONS, exist_ok=True)
+
+    def on_ivory(size, scale):
+        canvas = Image.new("RGBA", (size, size), (*ICON_BG, 255))
+        h = round(size * scale)
+        mark = heart.resize((h, h), Image.LANCZOS)
+        canvas.alpha_composite(mark, ((size - h) // 2, (size - h) // 2))
+        return canvas.convert("RGB")
+
+    outputs = {
+        "icon-192.png": on_ivory(192, 0.86),
+        "icon-512.png": on_ivory(512, 0.86),
+        # Maskable icons may be cropped to a circle; keep the emblem inside the central safe zone.
+        "icon-maskable-512.png": on_ivory(512, 0.62),
+    }
+    alpha = heart.getchannel("A").resize((96, 96), Image.LANCZOS)
+    badge = Image.new("RGBA", (96, 96), (255, 255, 255, 0))
+    badge.putalpha(alpha)
+    outputs["badge-96.png"] = badge
+    for name, im in outputs.items():
+        path = os.path.join(ICONS, name)
+        im.save(path, "PNG", optimize=True)
+        print(f"  icons/{name}  {im.width}x{im.height}  {os.path.getsize(path) // 1024} KB")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     missing = [f for f in [*ARTWORK, HEART_SOURCE] if not os.path.exists(os.path.join(SRC, f))]
@@ -89,6 +119,7 @@ def main():
     heart = transparent_heart(Image.open(os.path.join(SRC, HEART_SOURCE)))
     save_variants(heart, "brand-heart", quality=90)
     save_variants(dark_heart(heart), "brand-heart-dark", quality=90)
+    app_icons(heart)
 
 
 if __name__ == "__main__":

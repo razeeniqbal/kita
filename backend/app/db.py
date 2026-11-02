@@ -6,6 +6,7 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.pool import NullPool
 
+from app import push
 from app.config import get_settings
 
 
@@ -83,4 +84,7 @@ def get_db() -> Iterator[Connection]:
         # The payment-vs-commitment rule is a deferred trigger; checking at each statement lets the
         # handler report it as a normal validation error instead of failing at commit.
         conn.execute(text("set constraints all immediate"))
+        conn.info.pop(push.PENDING, None)   # a pooled connection may carry a failed request's queue
         yield conn
+        # Reached only when the handler returned normally, i.e. after its commit.
+        push.flush(conn)
