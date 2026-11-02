@@ -8,6 +8,13 @@ from sqlalchemy.exc import DBAPIError, OperationalError
 logger = logging.getLogger("kita")
 
 
+async def config_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """A setting is wrong (see app.db.describe_url_problem). The message is safe to show: it never
+    contains the setting's value."""
+    logger.error("Configuration problem on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse({"detail": str(exc)}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
 async def database_error_handler(request: Request, exc: DBAPIError) -> JSONResponse:
     code = getattr(exc.orig, "sqlstate", None)
     message = str(exc.orig).strip().splitlines()[0] if exc.orig else ""

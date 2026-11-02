@@ -33,7 +33,7 @@ MIGRATIONS = sorted((REPO / "supabase" / "migrations").glob("*.sql"))
 SEED = REPO / "supabase" / "seed.sql"
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def schema():
     with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as conn:
         conn.execute("drop schema if exists kita cascade")
@@ -45,7 +45,7 @@ def schema():
 
 
 @pytest.fixture()
-def pg():
+def pg(schema):
     """Direct connection for arranging data and checking results."""
     with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as conn:
         yield conn
@@ -93,7 +93,7 @@ def world(pg) -> World:
 
 
 @pytest.fixture(scope="session")
-def client():
+def client(schema):
     from fastapi.testclient import TestClient
 
     from app.main import app

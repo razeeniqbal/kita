@@ -6,8 +6,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
-from app.db import get_db
-from app.errors import database_error_handler
+from app.db import DatabaseConfigError, get_db
+from app.errors import config_error_handler, database_error_handler
 from app.routers import budget, calendar, events, guests, hantaran, notes, tasks, vendors, workspace
 
 app = FastAPI(
@@ -19,6 +19,7 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 app.add_exception_handler(DBAPIError, database_error_handler)
+app.add_exception_handler(DatabaseConfigError, config_error_handler)
 
 settings = get_settings()
 if settings.cors_origins:
