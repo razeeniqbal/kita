@@ -30,3 +30,13 @@ def test_common_mistakes_are_explained_without_repeating_the_value(value, phrase
 
 def test_session_pooler_port_is_fine_locally():
     assert describe_url_problem(GOOD.replace(":6543", ":5432"), serverless=False) is None
+
+
+def test_settings_trim_pasted_whitespace(monkeypatch):
+    from app.config import Settings
+    monkeypatch.setenv("DATABASE_URL", "\n" + GOOD + " \n")
+    monkeypatch.setenv("SUPABASE_URL", " https://abcdefghijklmnopqrst.supabase.co\n")
+    settings = Settings(_env_file=None)
+    assert settings.database_url == GOOD
+    assert settings.supabase_url == "https://abcdefghijklmnopqrst.supabase.co"
+    assert describe_url_problem(settings.database_url, serverless=True) is None

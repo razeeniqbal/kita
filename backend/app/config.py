@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -22,6 +23,12 @@ class Settings(BaseSettings):
     # Vercel sets VERCEL=1. Serverless functions should not keep a connection pool.
     vercel: bool = False
     cors_origins: list[str] = []
+
+    @field_validator("database_url", "supabase_url", "supabase_anon_key", "supabase_jwt_secret", mode="before")
+    @classmethod
+    def _trim(cls, value):
+        # Values pasted into a dashboard often pick up a trailing space or line break.
+        return value.strip() if isinstance(value, str) else value
 
 
 @lru_cache
