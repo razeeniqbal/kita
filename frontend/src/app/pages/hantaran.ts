@@ -6,11 +6,12 @@ import { API, Api, errorMessage, eventPath } from '../core/api';
 import { rm, toSen } from '../core/format';
 import { ModeService } from '../core/mode';
 import {
-  Assignee, Expense, HANTARAN_STATUS_LABEL, HantaranItem, HantaranList, HantaranStatus, MODES, Partner, STATUS_LABEL, Task,
+  Assignee, Category, Expense, HANTARAN_STATUS_LABEL, HantaranItem, HantaranList, HantaranStatus, MODES, Partner, STATUS_LABEL, Task,
 } from '../core/models';
 import { SessionStore } from '../core/session';
 import { Toast } from '../core/ui';
 import { Icon } from '../shared/icon';
+import { Picker, expensePickerItems, taskPickerItems } from '../shared/picker';
 import { EmptyState, Sheet } from '../shared/ui';
 
 const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 'READY'];
@@ -18,7 +19,7 @@ const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 
 /** Hantaran: what goes on each dulang, who gives it, and links to its cost (Budget) and task (Checklist). */
 @Component({
   selector: 'k-hantaran',
-  imports: [ReactiveFormsModule, RouterLink, Icon, EmptyState, Sheet],
+  imports: [ReactiveFormsModule, RouterLink, Icon, EmptyState, Picker, Sheet],
   template: `
     <div class="ph">
       <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Hantaran</h1>
@@ -81,16 +82,16 @@ const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 
 
         <div class="sec-h"><span>Links</span></div>
         <div class="list">
-          <div class="field"><label for="h-cost">Budget line</label><select id="h-cost" formControlName="expense_id">
-            <option value="">None</option>@for (e of expenses.value(); track e.id) { <option [value]="e.id">{{ e.name }}</option> }</select></div>
+          <k-picker label="Budget line" [items]="expenseItems()" [value]="form.controls.expense_id.value || null"
+            emptyText="No budget lines yet. Switch on Add to budget to create one." (changed)="form.controls.expense_id.setValue($event ?? '')" />
           @if (!editing() && !form.controls.expense_id.value) {
             <div class="field"><label for="h-add">Add to budget</label><input id="h-add" type="checkbox" class="toggle" formControlName="create_expense"></div>
             @if (form.controls.create_expense.value) {
               <div class="field"><label for="h-plan">Planned (RM)</label><input id="h-plan" inputmode="decimal" formControlName="planned" placeholder="0.00"></div>
             }
           }
-          <div class="field"><label for="h-task">Checklist task</label><select id="h-task" formControlName="task_id">
-            <option value="">None</option>@for (t of tasks.value(); track t.id) { <option [value]="t.id">{{ t.title }}</option> }</select></div>
+          <k-picker label="Checklist task" [items]="taskItems()" [value]="form.controls.task_id.value || null"
+            emptyText="No tasks in this checklist yet." (changed)="form.controls.task_id.setValue($event ?? '')" />
         </div>
         @if (editing(); as h) {
           @if (h.expense_id) { <p class="sheet-meta">{{ h.expense_name }} · {{ costLabel(h) }}</p> }
@@ -132,6 +133,9 @@ export class Hantaran {
   protected readonly list = httpResource<HantaranList>(this.url('/hantaran'));
   protected readonly expenses = httpResource<Expense[]>(this.url('/expenses'), { defaultValue: [] });
   protected readonly tasks = httpResource<Task[]>(this.url('/tasks'), { defaultValue: [] });
+  private readonly categories = httpResource<Category[]>(this.url('/budget-categories'), { defaultValue: [] });
+  protected readonly taskItems = computed(() => taskPickerItems(this.tasks.value(), this.mode.mode(), this.names()));
+  protected readonly expenseItems = computed(() => expensePickerItems(this.expenses.value(), this.categories.value()));
 
   protected readonly modeLabel = computed(() => MODES[this.mode.mode()].label);
   protected readonly assignees = computed(() => {

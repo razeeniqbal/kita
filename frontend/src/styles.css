@@ -284,6 +284,25 @@ button.row-main:hover .t{color:var(--accent-ink)}
 .toggle:checked::after{transform:translateX(20px)}
 .menu .nav-i{min-height:48px;font-size:16px;padding:0 16px;border-radius:0}
 
+/* Picker: grouped, searchable list that opens inside a sheet */
+k-picker{display:block;position:relative}
+.list>*+k-picker::before,.list>k-picker+*::before{content:"";position:absolute;top:0;right:0;left:16px;border-top:1px solid var(--hair);z-index:1}
+.picker-field{width:100%;text-align:left}
+.picker-value{flex:1;min-width:0;text-align:right;color:var(--text2);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picker-value.empty{color:var(--text3)}
+.picker-chev{color:var(--text3);transition:transform .18s}
+.picker-chev.down{transform:rotate(90deg)}
+.picker{border-top:1px solid var(--hair);padding:8px;max-height:360px;overflow:auto;display:grid;gap:2px}
+.picker .search{margin:2px 2px 6px;flex:none}
+.picker-group{font-size:12px;font-weight:600;color:var(--text2);padding:12px 10px 4px;letter-spacing:.01em}
+.picker-opt{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:10px;text-align:left;font-size:15px;color:var(--text)}
+.picker-opt:hover{background:var(--fill2)}
+.picker-opt .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.picker-opt .s{display:block;font-size:12.5px;color:var(--text2);margin-top:1px;font-weight:400}
+.picker-opt.on{background:var(--tint);color:var(--accent-ink);font-weight:600}
+.picker-opt k-icon{color:var(--accent-ink)}
+.picker-empty{padding:12px 10px;color:var(--text2);font-size:14px}
+
 .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:500;opacity:0;transition:.22s;z-index:40;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 

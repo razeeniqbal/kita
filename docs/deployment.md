@@ -4,8 +4,8 @@ One Vercel project serves everything:
 
 ```
 browser ──► Vercel ──► Angular app (static files from frontend/dist/kita/browser)
-               └─────► /api/*  ──► api/index.py (FastAPI, Python 3.12, region dub1)
-                                        ├─► Supabase PostgreSQL (eu-west-1, via the pooler)
+               └─────► /api/*  ──► api/index.py (FastAPI, Python 3.12, region sin1)
+                                        ├─► Supabase PostgreSQL (ap-southeast-1 Singapore, via the pooler)
                                         └─► Supabase Auth keys (to check sign-in tokens)
 ```
 
@@ -27,7 +27,7 @@ In the [Supabase dashboard](https://supabase.com/dashboard) for the project:
 
    | Name | Value |
    |---|---|
-   | `DATABASE_URL` | Transaction pooler URL, e.g. `postgresql://postgres.<project-ref>:<password>@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require` |
+   | `DATABASE_URL` | Transaction pooler URL, e.g. `postgresql://postgres.<project-ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require` |
    | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
    | `SUPABASE_ANON_KEY` | The anon / publishable key |
 
@@ -64,7 +64,7 @@ Supabase → **Authentication → URL Configuration**:
 - **Every push to `main` deploys automatically.** Other branches get preview deployments; they use the same live database, so don't test destructive changes there.
 - **Schema changes** go in a new file in `supabase/migrations/`, applied before the code that needs it is deployed.
 - **Supabase free plan pauses** a project after 7 days without use. Using the app weekly keeps it awake; otherwise unpause it from the dashboard, or upgrade.
-- **Speed:** the database is in Ireland, so each request from Malaysia makes one long trip to Europe. With two users that's fine. If it ever feels slow, a Supabase project in Singapore (`ap-southeast-1`) with the function region set to `sin1` would be much closer.
+- **Region:** the database (Supabase `ap-southeast-1`) and the API function (Vercel `sin1`) are both in Singapore, close to Malaysia. The project moved there from Ireland on 2 November 2026 with `scripts/copy_supabase_project.py`, which copies the schema, data and sign-in accounts (passwords included) between two projects and checks every table matches.
 
 ## Checked before the first deploy
 

@@ -6,12 +6,13 @@ import { API, Api, errorMessage, eventPath, isConflict } from '../core/api';
 import { formatTimestamp } from '../core/format';
 import { ModeService } from '../core/mode';
 import {
-  Assignee, Expense, MODES, PRIORITY_LABEL, Priority, STATUS_LABEL, TASK_SECTIONS, Task, TaskStatus,
+  Assignee, Category, Expense, MODES, PRIORITY_LABEL, Priority, STATUS_LABEL, TASK_SECTIONS, Task, TaskStatus,
 } from '../core/models';
 import { SessionStore } from '../core/session';
 import { Toast } from '../core/ui';
 import { Icon } from '../shared/icon';
 import { TaskRow, actorName } from '../shared/rows';
+import { Picker, expensePickerItems } from '../shared/picker';
 import { EmptyState, Sheet } from '../shared/ui';
 
 type StatusFilter = 'open' | 'all' | TaskStatus;
@@ -20,7 +21,7 @@ const PRIORITY_ORDER: Record<Priority, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
 
 @Component({
   selector: 'k-checklist',
-  imports: [ReactiveFormsModule, Icon, TaskRow, EmptyState, Sheet],
+  imports: [ReactiveFormsModule, Icon, TaskRow, EmptyState, Picker, Sheet],
   template: `
     <div class="ph">
       <div class="ph-t"><div class="eyebrow acc">{{ modeLabel() }}</div><h1>Checklist</h1>
@@ -70,9 +71,8 @@ const PRIORITY_ORDER: Record<Priority, number> = { HIGH: 0, NORMAL: 1, LOW: 2 };
           <div class="field"><label for="t-due">Due date</label><input id="t-due" type="date" formControlName="due_date"></div>
           <div class="field"><label for="t-who">Assigned to</label><select id="t-who" formControlName="assignee">
             @for (a of assignees(); track a.key) { <option [value]="a.key">{{ a.label }}</option> }</select></div>
-          <div class="field"><label for="t-cost">Linked cost</label><select id="t-cost" formControlName="expense_id">
-            <option value="">None</option>
-            @for (e of expenses.value(); track e.id) { <option [value]="e.id">{{ e.name }}</option> }</select></div>
+          <k-picker label="Linked cost" [items]="expenseItems()" [value]="form.controls.expense_id.value || null"
+            emptyText="No budget lines yet. Add them in Budget." (changed)="form.controls.expense_id.setValue($event ?? '')" />
         </div>
         @if (editing(); as t) {
           <p class="sheet-meta">Last updated by {{ actor(t.updated_by) }} · {{ stamp(t.updated_at) }}</p>
@@ -120,6 +120,11 @@ export class Checklist {
     const id = this.modeService.eventId();
     return id ? API + eventPath(id, '/expenses') : undefined;
   }, { defaultValue: [] });
+  private readonly categories = httpResource<Category[]>(() => {
+    const id = this.modeService.eventId();
+    return id ? API + eventPath(id, '/budget-categories') : undefined;
+  }, { defaultValue: [] });
+  protected readonly expenseItems = computed(() => expensePickerItems(this.expenses.value(), this.categories.value()));
 
   protected readonly modeLabel = computed(() => MODES[this.modeService.mode()].label);
   protected readonly otherLabel = computed(() => MODES[MODES[this.modeService.mode()].other].label);
