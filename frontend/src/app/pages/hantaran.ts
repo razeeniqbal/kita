@@ -4,15 +4,15 @@ import { httpResource } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { API, Api, errorMessage, eventPath } from '../core/api';
-import { rm, toSen } from '../core/format';
+import { rm, senToInput, toSen } from '../core/format';
 import { ModeService } from '../core/mode';
 import {
-  Assignee, Category, Expense, HANTARAN_STATUS_LABEL, HantaranItem, HantaranList, HantaranStatus, MODES, Partner, STATUS_LABEL, Task,
+  Assignee, HANTARAN_STATUS_LABEL, HantaranItem, HantaranList, HantaranStatus, MODES, Partner, STATUS_LABEL, Task,
 } from '../core/models';
 import { SessionStore } from '../core/session';
 import { Toast } from '../core/ui';
 import { Icon } from '../shared/icon';
-import { Picker, expensePickerItems, suggestLinks, taskPickerItems } from '../shared/picker';
+import { Picker, suggestLinks, taskPickerItems } from '../shared/picker';
 import { EmptyState, Sheet } from '../shared/ui';
 
 const STATUSES: HantaranStatus[] = ['PLANNED', 'BUYING', 'BOUGHT', 'DECORATED', 'READY'];
@@ -82,21 +82,14 @@ const COMMON_NAMES = [
           <div class="field"><label for="h-tray">Dulang number</label><input id="h-tray" type="number" min="1" max="99" formControlName="tray_number" placeholder="e.g. 1"></div>
           <div class="field"><label for="h-status">Status</label><select id="h-status" formControlName="status">
             @for (s of statuses; track s) { <option [value]="s">{{ statusLabel[s] }}</option> }</select></div>
+          <div class="field"><label for="h-plan">Cost (RM)</label><input id="h-plan" inputmode="decimal" formControlName="planned" placeholder="Optional"></div>
         </div>
+        @if (editing()?.paid_sen) { <p class="sheet-meta">{{ costLabel(editing()!) }}. Add payments in <a routerLink="../budget">Budget</a>.</p> }
 
-        <div class="sec-h"><span>Linked to</span></div>
         <div class="list">
-          <k-picker label="Budget line" [items]="expenseItems()" [value]="form.controls.expense_id.value || null" [suggestions]="expenseSuggestions()"
-            emptyText="No costs yet. Enter a cost above to add one." (changed)="form.controls.expense_id.setValue($event ?? '')" />
-          @if (!editing() && !form.controls.expense_id.value) {
-            <div class="field"><label for="h-plan">Cost (RM)</label><input id="h-plan" inputmode="decimal" formControlName="planned" placeholder="Optional"></div>
-          }
           <k-picker label="Checklist task" [items]="taskItems()" [value]="form.controls.task_id.value || null" [suggestions]="taskSuggestions()"
             emptyText="No tasks in this checklist yet." (changed)="form.controls.task_id.setValue($event ?? '')" />
         </div>
-        @if (editing(); as h) {
-          @if (h.expense_id) { <p class="sheet-meta">{{ costLabel(h) }}. Change the amount or add payments in <a routerLink="../budget">Budget</a>.</p> }
-        }
         <div class="list"><div class="field stack"><label for="h-notes">Notes</label><textarea id="h-notes" formControlName="notes" rows="2" placeholder="Gubahan colours, where to buy, who decorates"></textarea></div></div>
 
         <div class="sheet-acts">
@@ -131,11 +124,8 @@ export class Hantaran {
     return id ? API + eventPath(id, path) : undefined;
   };
   protected readonly list = httpResource<HantaranList>(this.url('/hantaran'));
-  protected readonly expenses = httpResource<Expense[]>(this.url('/expenses'), { defaultValue: [] });
   protected readonly tasks = httpResource<Task[]>(this.url('/tasks'), { defaultValue: [] });
-  private readonly categories = httpResource<Category[]>(this.url('/budget-categories'), { defaultValue: [] });
   protected readonly taskItems = computed(() => taskPickerItems(this.tasks.value(), this.mode.mode(), this.names()));
-  protected readonly expenseItems = computed(() => expensePickerItems(this.expenses.value(), this.categories.value()));
 
   protected readonly modeLabel = computed(() => MODES[this.mode.mode()].label);
   protected readonly groups = computed(() => {
@@ -161,7 +151,6 @@ export class Hantaran {
   /** Links that look like this item, offered as one-tap chips while the field is still empty. */
   protected readonly taskSuggestions = computed(() =>
     suggestLinks(this.typedName(), this.taskItems(), { fallback: ['hantaran', 'dulang'] }));
-  protected readonly expenseSuggestions = computed(() => suggestLinks(this.typedName(), this.expenseItems()));
   protected readonly commonNames = COMMON_NAMES;
 
   protected subline(h: HantaranItem): string {
@@ -171,13 +160,17 @@ export class Hantaran {
     return h.task_status ? STATUS_LABEL[h.task_status] : '';
   }
   protected paidInFull(h: HantaranItem): boolean {
-    const cost = h.committed_sen || h.planned_sen;
+    const cost = this.cost(h);
     return !!cost && h.paid_sen >= cost;
+  }
+  /** The linked budget line's agreed price, else its estimate; 0 when there is no cost yet. */
+  protected cost(h: HantaranItem): number {
+    return h.expense_id ? (h.committed_sen || h.planned_sen || 0) : 0;
   }
   protected costLabel(h: HantaranItem): string {
     if (this.paidInFull(h)) return 'Paid';
-    if (h.paid_sen) return `${rm(h.paid_sen)} paid of ${rm(h.committed_sen || h.planned_sen)}`;
-    return rm(h.committed_sen || h.planned_sen);
+    if (h.paid_sen) return `${rm(h.paid_sen)} paid of ${rm(this.cost(h))}`;
+    return rm(this.cost(h));
   }
 
   protected openNew(): void {
@@ -190,7 +183,8 @@ export class Hantaran {
   protected openEdit(h: HantaranItem): void {
     this.editing.set(h);
     this.form.reset({ name: h.name, giver: h.giver, tray_number: h.tray_number, status: h.status, assignee: h.assignee,
-                      expense_id: h.expense_id ?? '', task_id: h.task_id ?? '', planned: '', notes: h.notes });
+                      expense_id: h.expense_id ?? '', task_id: h.task_id ?? '',
+                      planned: this.cost(h) ? senToInput(this.cost(h)) : '', notes: h.notes });
     this.show();
   }
 
@@ -208,14 +202,20 @@ export class Hantaran {
     const planned = toSen(v.planned);
     if (planned === null) return this.error.set('Enter the cost in RM, like 350 or 350.00.');
     const body = { name: v.name.trim(), giver: v.giver, tray_number: tray, status: v.status, assignee: v.assignee,
-                   expense_id: v.expense_id || null, task_id: v.task_id || null, notes: v.notes.trim() };
+                   task_id: v.task_id || null, notes: v.notes.trim() };
     const h = this.editing();
     const eventId = this.mode.eventId()!;
     await this.run(async () => {
-      if (h) await this.api.patch(eventPath(eventId, `/hantaran/${h.id}`), { ...body, version: h.version });
-      else await this.api.post(eventPath(eventId, '/hantaran'),
-        { ...body, create_expense: !!planned && !body.expense_id, planned_sen: planned });
-      this.toast.show(h ? 'Saved' : planned && !body.expense_id ? 'Added, with its cost in Budget' : 'Item added');
+      if (h) {
+        await this.api.patch(eventPath(eventId, `/hantaran/${h.id}`), { ...body, version: h.version });
+        // The cost lives on the item's budget line: add one, or change its amount.
+        if (planned !== this.cost(h) && (planned || h.expense_id)) {
+          await this.api.put(eventPath(eventId, `/hantaran/${h.id}/cost`), { cost_sen: planned });
+        }
+      } else {
+        await this.api.post(eventPath(eventId, '/hantaran'), { ...body, create_expense: !!planned, planned_sen: planned });
+      }
+      this.toast.show(h ? 'Saved' : planned ? 'Added, with its cost in Budget' : 'Item added');
     });
   }
 
@@ -235,7 +235,6 @@ export class Hantaran {
       await action();
       this.sheetOpen.set(false);
       this.list.reload();
-      this.expenses.reload();
     } catch (err) {
       this.error.set(errorMessage(err));
       this.confirmDelete.set(false);

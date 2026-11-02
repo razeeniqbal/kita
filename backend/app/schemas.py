@@ -243,6 +243,10 @@ class HantaranCreate(Body):
     planned_sen: Sen = 0
 
 
+class HantaranCost(Body):
+    cost_sen: Sen
+
+
 class HantaranUpdate(Body):
     version: Version
     name: Name(160) | None = None

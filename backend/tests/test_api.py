@@ -307,6 +307,31 @@ def test_hantaran_links_to_budget_and_checklist(client, world, pg):
     assert client.get(url(world.tunang, f"/hantaran/{sirih['id']}"), headers=razeen).json()["expense_id"] is None
 
 
+def test_hantaran_cost_adds_then_updates_its_budget_line(client, world, pg):
+    razeen = auth(world.razeen)
+    pg.execute("insert into kita.budget_categories (planning_event_id, name) values (%s, 'Hantaran & dulang')", (world.tunang,))
+    item = client.post(url(world.tunang, "/hantaran"), json={"name": "Creampuff"}, headers=razeen).json()
+    assert item["expense_id"] is None
+
+    added = client.put(url(world.tunang, f"/hantaran/{item['id']}/cost"), json={"cost_sen": 8_000}, headers=razeen)
+    assert added.status_code == 200, added.text
+    expense_id = added.json()["expense_id"]
+    expense = client.get(url(world.tunang, f"/expenses/{expense_id}"), headers=razeen).json()
+    assert (expense["name"], expense["planned_sen"]) == ("Hantaran: Creampuff", 8_000) and expense["category_id"]
+
+    # Changing the cost keeps the same line; an agreed price follows it.
+    client.patch(url(world.tunang, f"/expenses/{expense_id}"), json={"version": expense["version"], "committed_sen": 8_000},
+                 headers=razeen)
+    changed = client.put(url(world.tunang, f"/hantaran/{item['id']}/cost"), json={"cost_sen": 9_500}, headers=razeen)
+    assert changed.json()["expense_id"] == expense_id
+    expense = client.get(url(world.tunang, f"/expenses/{expense_id}"), headers=razeen).json()
+    assert (expense["planned_sen"], expense["committed_sen"]) == (9_500, 9_500)
+
+    other_item = client.post(url(world.perkahwinan, "/hantaran"), json={"name": "Kek"}, headers=razeen).json()
+    assert client.put(url(world.tunang, f"/hantaran/{other_item['id']}/cost"), json={"cost_sen": 1},
+                      headers=razeen).status_code == 404
+
+
 def test_hantaran_cannot_link_to_the_other_mode(client, world):
     razeen = auth(world.razeen)
     other_cost = add_expense(client, world, world.perkahwinan)
