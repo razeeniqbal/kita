@@ -55,7 +55,10 @@ All routes are under `/api/v1` and need `Authorization: Bearer <Supabase access 
 
 **Errors** come back as `{"detail": "..."}` in plain English: `401` sign in again, `403` not in a workspace, `404` not found (also for anything in someone else's workspace), `409` edit conflict or duplicate, `422` invalid value or a database rule such as overpayment.
 
-## Not built yet
+## Document files
 
-- Document upload. It needs a private Supabase Storage bucket and signed upload URLs; listing, renaming and deleting document records already works.
-- Vercel wiring (`vercel.json` and the `api/` entry point). That comes with the Angular app, so both deploy as one project.
+The browser uploads files straight to the private `documents` storage bucket, at
+`<workspace id>/<planning event id>/<random name>`. Storage policies let only members of that workspace
+upload, open (via short-lived signed links) or delete them; see
+`supabase/migrations/20261102150000_document_storage.sql`. `POST .../documents` then records the name,
+type and size, and refuses paths outside the caller's own plan.

@@ -42,7 +42,7 @@ npm run build                 # production build into dist/kita/browser
 
 Styling is one global stylesheet (`src/styles.css`) carried over from the prototype: design tokens for both themes, with the mode accent switched by a class on `<body>`. The spec suggests Tailwind; the hand-written tokens were kept because the prototype's design was already settled and tested in both themes.
 
-## Not built yet
+## Document files
 
-- Document upload (waits for a private Supabase Storage bucket).
-- Vercel configuration.
+Documents upload directly to the private Supabase Storage bucket `documents` with the signed-in user's
+session (`AuthService.documentFiles()`), and open through a signed link that lasts five minutes.

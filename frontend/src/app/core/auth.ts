@@ -95,6 +95,11 @@ export class AuthService {
     this.session.set(null);
   }
 
+  /** The private bucket for document files. Access is checked by storage policies against the signed-in user. */
+  documentFiles() {
+    return this.requireClient().storage.from('documents');
+  }
+
   private requireClient(): SupabaseClient {
     if (!this.client) throw new Error('Sign-in is not configured');
     return this.client;

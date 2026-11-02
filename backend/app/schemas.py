@@ -260,6 +260,19 @@ class HantaranUpdate(Body):
     sort_order: int | None = None
 
 
+DocumentType = Literal["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]
+
+
+class DocumentCreate(Body):
+    """Recorded after the browser has uploaded the file to the private storage bucket."""
+    name: Name(200)
+    kind: DocumentKind = "OTHER"
+    # <workspace id>/<planning event id>/<file name>; the route checks the two ids.
+    storage_path: Annotated[str, StringConstraints(pattern=r"^[0-9a-f-]{36}/[0-9a-f-]{36}/[A-Za-z0-9._-]{1,120}$")]
+    content_type: DocumentType
+    size_bytes: Annotated[int, Field(ge=1, le=15 * 1024 * 1024)]
+
+
 class DocumentUpdate(Body):
     version: Version
     name: Name(200) | None = None

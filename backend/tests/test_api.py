@@ -376,3 +376,18 @@ def test_seed_applies_to_a_fresh_schema(pg):
         assert pg.execute("select count(*) from kita.budget_categories").fetchone()[0] == 24
     finally:
         pg.execute("rollback")
+
+
+def test_documents_are_recorded_only_for_their_own_plan(client, world):
+    razeen = auth(world.razeen)
+    doc = {"name": "Sebut harga dewan", "kind": "QUOTATION", "content_type": "application/pdf", "size_bytes": 2048,
+           "storage_path": f"{world.workspace}/{world.tunang}/a1b2c3.pdf"}
+    made = client.post(url(world.tunang, "/documents"), json=doc, headers=razeen)
+    assert made.status_code == 201, made.text
+    assert client.get(url(world.tunang, "/documents"), headers=razeen).json()[0]["name"] == "Sebut harga dewan"
+
+    # A path in the other mode's folder, or an unsupported file type, is refused.
+    wrong_mode = {**doc, "storage_path": f"{world.workspace}/{world.perkahwinan}/x.pdf"}
+    assert client.post(url(world.tunang, "/documents"), json=wrong_mode, headers=razeen).status_code == 422
+    exe = {**doc, "storage_path": f"{world.workspace}/{world.tunang}/x.exe", "content_type": "application/x-msdownload"}
+    assert client.post(url(world.tunang, "/documents"), json=exe, headers=razeen).status_code == 422
