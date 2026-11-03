@@ -66,7 +66,7 @@ Supabase → **Authentication → URL Configuration**:
 
 kita. is a PWA: it can be installed to the Home Screen and send push notifications.
 
-- **What it sends:** a notification when your partner adds or completes something (tasks, costs, payments, hantaran, calendar, guests, vendors, notes), and a **morning summary at 8 AM** (tasks due, today's appointments, balances due). Each device chooses in **Settings → Notifications on this device**.
+- **What it sends:** a notification when your partner adds, edits, completes or deletes something (tasks, costs, payments, hantaran, calendar, guests, vendors, notes, documents); a burst of changes buzzes once and then updates silently, and a **morning summary at 8 AM** (tasks due, today's appointments, balances due). Each device chooses in **Settings → Notifications on this device**.
 - **Server side:** the four `VAPID_*` / `CRON_SECRET` variables above, and the `crons` entry in `vercel.json` (00:00 UTC = 8 AM Malaysia). On Vercel's free plan a daily cron can run any time within that hour.
 - **iPhone / iPad (iOS 16.4+):** open kita. in Safari, tap **Share → Add to Home Screen**, open it from the Home Screen, then turn notifications on in Settings. Safari tabs can't receive push.
 - **Android, Windows, Mac:** turn them on in Settings in the browser; installing is optional.

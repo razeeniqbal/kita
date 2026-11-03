@@ -14,7 +14,9 @@ self.addEventListener('push', event => {
   event.waitUntil(self.registration.showNotification(data.title || 'kita.', {
     body: data.body || '',
     tag: data.tag,
-    renotify: !!data.tag,
+    // A burst of changes replaces the same notification; only the first one buzzes.
+    renotify: !!data.tag && !data.quiet,
+    silent: !!data.quiet,
     icon: '/icons/icon-192.png',
     badge: '/icons/badge-96.png',
     data: { url: data.url || '/' },

@@ -54,22 +54,27 @@ def allowed_endpoint(endpoint: str) -> bool:
     return parts.scheme == "https" and any(host == h or host.endswith("." + h) for h in PUSH_HOSTS)
 
 
-def worth_telling(action: str, summary: str) -> bool:
-    """Additions, completions, payments and moves. Routine edits and deletions stay quiet."""
-    if action in ("planning_event.created", "budget_category.created"):
-        return False
-    return (action.endswith(".created") or action in ("task.moved", "guest.copied")
-            or (action == "task.updated" and summary.startswith("completed")))
+# Changes the partner doesn't need to hear about: setting up a mode and tidying budget categories.
+QUIET_ACTIONS = ("planning_event.created", "budget_category.")
+
+# A partner who just got a notification isn't buzzed again for this long; the newer change
+# still replaces the text on screen, silently.
+QUIET_FOR = dt.timedelta(minutes=2)
+
+
+def worth_telling(action: str) -> bool:
+    """Every addition, edit, completion, payment, move and deletion, except setup housekeeping."""
+    return not action.startswith(QUIET_ACTIONS)
 
 
 def queue(db: Connection, change: Change) -> None:
-    if worth_telling(change.action, change.summary):
+    if worth_telling(change.action):
         db.info.setdefault(PENDING, []).append(change)
 
 
 def flush(db: Connection) -> None:
     """Send what the request queued: one notification to the partner's devices, describing the
-    first change (a task move logs twice; a burst of edits shouldn't buzz twice)."""
+    first change (a task move logs twice). Devices notified in the last two minutes get it silently."""
     pending = db.info.pop(PENDING, [])
     if not pending or not configured():
         return
@@ -88,12 +93,19 @@ def flush(db: Connection) -> None:
             mode = db.execute(select(planning_events.c.mode).where(planning_events.c.id == change.event_id)).scalar()
         page = PAGE.get(change.entity_type, "")
         url = f"/{mode.lower()}/{page}".rstrip("/") if mode else "/activity"
-        send(db, subs, {
+        payload = {
             "title": f"kita. · {MODE_LABEL[mode]}" if mode else "kita.",
             "body": f"{name} {change.summary}",
             "url": url,
             "tag": f"{change.entity_type}-{change.event_id}",
-        })
+        }
+        recent = dt.datetime.now(dt.UTC) - QUIET_FOR
+        loud = [s for s in subs if s.last_sent_at is None or s.last_sent_at < recent]
+        quiet = [s for s in subs if s not in loud]
+        if loud:
+            send(db, loud, payload)
+        if quiet:
+            send(db, quiet, {**payload, "quiet": True})
     except Exception:  # A failed notification must never turn a saved change into an error.
         logger.exception("Could not send partner notification")
 

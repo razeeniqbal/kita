@@ -32,17 +32,20 @@ def test_only_known_push_services_are_accepted(endpoint, ok):
     assert push.allowed_endpoint(endpoint) is ok
 
 
-@pytest.mark.parametrize("action, summary, tell", [
-    ("task.created", "added task “Cincin”", True),
-    ("task.updated", "completed “Cincin”", True),
-    ("task.updated", "set “Cincin” to in progress", False),
-    ("task.deleted", "deleted task “Cincin”", False),
-    ("payment.created", "recorded RM 100", True),
-    ("task.moved", "moved “Cincin” from Tunang to Perkahwinan", True),
-    ("budget_category.created", "added budget category “Misc”", False),
+@pytest.mark.parametrize("action, tell", [
+    ("task.created", True),
+    ("task.updated", True),
+    ("hantaran_item.updated", True),
+    ("expense.deleted", True),
+    ("payment.created", True),
+    ("task.moved", True),
+    ("planning_event.updated", True),
+    ("planning_event.created", False),
+    ("budget_category.created", False),
+    ("budget_category.updated", False),
 ])
-def test_partner_hears_about_additions_and_completions_only(action, summary, tell):
-    assert push.worth_telling(action, summary) is tell
+def test_partner_hears_about_every_change_but_setup_housekeeping(action, tell):
+    assert push.worth_telling(action) is tell
 
 
 def test_payload_is_encrypted_for_the_device_and_signed_with_vapid():
@@ -76,3 +79,26 @@ def test_devices_the_push_service_has_forgotten_are_removed(monkeypatch):
     statement = str(db.execute.call_args_list[0].args[0])
     assert statement.startswith("DELETE FROM kita.push_subscriptions")
     db.commit.assert_called_once()
+
+
+def test_a_burst_of_changes_buzzes_once_then_updates_quietly(monkeypatch):
+    import datetime as dt
+    import uuid
+
+    sent = []
+    monkeypatch.setattr(push, "configured", lambda: True)
+    monkeypatch.setattr(push, "send", lambda db, subs, payload: sent.append(([s.id for s in subs], payload)))
+    fresh = SimpleNamespace(id="phone", last_sent_at=None)
+    just_buzzed = SimpleNamespace(id="laptop", last_sent_at=dt.datetime.now(dt.UTC) - dt.timedelta(seconds=30))
+    db = MagicMock()
+    db.info = {}
+    db.execute.return_value.all.return_value = [fresh, just_buzzed]
+    db.execute.return_value.one.return_value = SimpleNamespace(partner_1_name="Razeen", partner_2_name="Sabrina")
+    db.execute.return_value.scalar.return_value = "TUNANG"
+
+    push.queue(db, push.Change(uuid.uuid4(), uuid.uuid4(), 2, uuid.uuid4(), "hantaran_item.updated", "hantaran_item",
+                               "updated hantaran item “Perfume”"))
+    push.flush(db)
+    assert sent[0] == (["phone"], {"title": "kita. · Tunang", "body": "Sabrina updated hantaran item “Perfume”",
+                                   "url": "/tunang/hantaran", "tag": sent[0][1]["tag"]})
+    assert sent[1][0] == ["laptop"] and sent[1][1]["quiet"] is True

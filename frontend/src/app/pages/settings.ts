@@ -54,11 +54,11 @@ import { Notice, Sheet } from '../shared/ui';
         <div class="list">
           <button type="button" class="row-btn" (click)="enable()" [disabled]="push.busy()"><k-icon name="bell" [size]="18" />Turn on notifications</button>
         </div>
-        <p class="sheet-meta">Hear when {{ partnerName() }} adds or completes something, and get a short summary each morning.</p>
+        <p class="sheet-meta">Hear when {{ partnerName() }} changes something, and get a short summary each morning.</p>
       }
       @case ('on') {
         <div class="list">
-          <div class="field"><label for="n-partner">When {{ partnerName() }} adds or completes something</label>
+          <div class="field"><label for="n-partner">When {{ partnerName() }} changes something</label>
             <input id="n-partner" type="checkbox" class="toggle" [checked]="push.prefs()?.partner_updates" (change)="setPref('partner_updates', $event)"></div>
           <div class="field"><label for="n-daily">Morning summary at 8 AM</label>
             <input id="n-daily" type="checkbox" class="toggle" [checked]="push.prefs()?.daily_digest" (change)="setPref('daily_digest', $event)"></div>
