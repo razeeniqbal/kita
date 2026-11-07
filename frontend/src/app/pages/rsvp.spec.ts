@@ -34,8 +34,7 @@ describe('Rsvp page', () => {
 
     el.querySelector<HTMLButtonElement>('.choice button')!.click();
     f.detectChanges();
-    expect(el.querySelectorAll('.counts button').length).toBe(4);   // up to the 4 seats saved
-    el.querySelector<HTMLButtonElement>('.counts button:nth-child(3)')!.click();
+    el.querySelector<HTMLButtonElement>('.stepper button')!.click();   // 4 → 3
     f.detectChanges();
     el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
     await new Promise(r => setTimeout(r));
@@ -71,7 +70,7 @@ describe('Rsvp page on the shared link', () => {
     phone.value = '012-345 6789'; phone.dispatchEvent(new Event('input'));
     el.querySelector<HTMLButtonElement>('.choice button')!.click();
     f.detectChanges();
-    el.querySelector<HTMLButtonElement>('.counts button:nth-child(2)')!.click();   // 2 people
+    el.querySelector<HTMLButtonElement>('.stepper button:last-child')!.click();   // 1 → 2
     f.detectChanges();
     el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
     await new Promise(r => setTimeout(r));

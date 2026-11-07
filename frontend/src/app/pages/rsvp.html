@@ -69,7 +69,7 @@
       </section>
 
       <section class="block rsvp-card reveal" id="rsvp">
-        <h2 class="script">RSVP</h2>
+        <h2 class="caps">RSVP</h2>
         <p class="sub">Pengesahan Kehadiran
           @if (i.event.rsvp_by && !i.closed) { <br><small>Sila balas sebelum {{ longDate(i.event.rsvp_by) }}</small> }</p>
 
@@ -101,11 +101,11 @@
             </div>
             @if (answer() === 'ATTENDING' && maxSeats() > 1) {
               <div class="seats">
-                <div class="seats-h"><span>Berapa orang akan hadir?</span><small>termasuk anda</small></div>
-                <div class="counts" role="radiogroup" aria-label="Bilangan tetamu">
-                  @for (n of counts(); track n) {
-                    <button type="button" role="radio" [attr.aria-checked]="seats() === n" (click)="seats.set(n)">{{ n }}</button>
-                  }
+                <span>Bilangan tetamu<small>termasuk anda</small></span>
+                <div class="stepper">
+                  <button type="button" (click)="seats.set(seats() - 1)" [disabled]="seats() <= 1" aria-label="Kurang seorang">−</button>
+                  <b aria-live="polite">{{ seats() }}</b>
+                  <button type="button" (click)="seats.set(seats() + 1)" [disabled]="seats() >= maxSeats()" aria-label="Tambah seorang">+</button>
                 </div>
               </div>
             }

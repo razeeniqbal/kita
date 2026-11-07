@@ -57,8 +57,6 @@ export class Rsvp implements OnInit {
   private readonly path = signal('');
 
   protected readonly maxSeats = computed(() => this.inv()?.guest?.seats ?? SHARED_MAX);
-  /** The headcounts a guest can tap: 1 up to their invited seats (or 10 on the shared link). */
-  protected readonly counts = computed(() => Array.from({ length: Math.min(this.maxSeats(), SHARED_MAX) }, (_, n) => n + 1));
   /** Days, hours, minutes and seconds until the event starts (Malaysia time), or null without a date. */
   protected readonly countdown = computed(() => {
     const e = this.inv()?.event;
