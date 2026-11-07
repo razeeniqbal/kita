@@ -391,3 +391,21 @@ def test_documents_are_recorded_only_for_their_own_plan(client, world):
     assert client.post(url(world.tunang, "/documents"), json=wrong_mode, headers=razeen).status_code == 422
     exe = {**doc, "storage_path": f"{world.workspace}/{world.tunang}/x.exe", "content_type": "application/x-msdownload"}
     assert client.post(url(world.tunang, "/documents"), json=exe, headers=razeen).status_code == 422
+
+
+def test_widget_key_reads_the_summary_and_a_new_key_revokes_the_old(client, world):
+    razeen = auth(world.razeen)
+    add_task(client, world, world.tunang, title="Tempah dewan", due_date="2020-01-01", assignee="PARTNER_1")
+    add_task(client, world, world.tunang, title="Sabrina's task", due_date="2020-01-01", assignee="PARTNER_2")
+    assert client.get("/api/v1/widget/summary").status_code == 401
+
+    first = client.post("/api/v1/widget/key", headers=razeen).json()["key"]
+    data = client.get("/api/v1/widget/summary", headers={"X-Widget-Key": first}).json()
+    assert {e["mode"] for e in data["events"]} == {"TUNANG", "PERKAHWINAN"}
+    assert [t["title"] for t in data["tasks"]] == ["Tempah dewan"] and data["tasks"][0]["overdue"] is True
+
+    second = client.post("/api/v1/widget/key", headers=razeen).json()["key"]
+    assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": first}).status_code == 401
+    assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": second}).status_code == 200
+    client.delete("/api/v1/widget/key", headers=razeen)
+    assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": second}).status_code == 401

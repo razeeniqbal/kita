@@ -164,3 +164,9 @@ push_subscriptions = Table(
     Column("partner_updates", Boolean), Column("daily_digest", Boolean),
     Column("created_at", DateTime(timezone=True)), Column("last_sent_at", DateTime(timezone=True)),
 )
+
+widget_keys = Table(
+    "widget_keys", metadata,
+    Column("user_id", UUID(as_uuid=True), primary_key=True), Column("workspace_id", UUID(as_uuid=True)),
+    Column("key_hash", Text), Column("created_at", DateTime(timezone=True)), Column("last_used_at", DateTime(timezone=True)),
+)

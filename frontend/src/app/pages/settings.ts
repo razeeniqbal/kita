@@ -4,13 +4,17 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api, errorMessage } from '../core/api';
 import { AuthService } from '../core/auth';
+import { formatTimestamp } from '../core/format';
 import { MODES, Mode } from '../core/models';
 import { PushPrefs, PushService } from '../core/push';
+import { widgetScript } from '../core/widget-script';
 import { SessionStore } from '../core/session';
 import { Theme, ThemeService, Toast } from '../core/ui';
 import { EventSheet } from '../shared/event-sheet';
 import { Icon, IconName } from '../shared/icon';
 import { Notice, Sheet } from '../shared/ui';
+
+interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: string | null; }
 
 @Component({
   selector: 'k-settings',
@@ -67,6 +71,28 @@ import { Notice, Sheet } from '../shared/ui';
         </div>
       }
     }
+
+    <div class="sec-h">Home Screen widget</div>
+    <div class="list">
+      @if (script(); as code) {
+        <div class="row"><div class="row-main"><span class="t">Your widget is ready to add</span>
+          <ol class="steps">
+            <li>Install <b>Scriptable</b> (free) from the App Store.</li>
+            <li>Tap <b>Copy script</b> below. In Scriptable, tap <b>+</b>, paste, and name it <b>kita</b>.</li>
+            <li>Hold your Home Screen, tap <b>+</b> (or Edit → Add Widget), choose <b>Scriptable</b> and a size.</li>
+            <li>Hold the new widget → <b>Edit Widget</b> → Script: <b>kita</b>.</li>
+          </ol></div></div>
+        <button type="button" class="row-btn" (click)="copyScript(code)"><k-icon name="copy" [size]="18" />Copy script</button>
+      } @else if (widget()?.exists) {
+        <div class="row"><div class="row-main"><span class="t">Widget is on</span>
+          <span class="s">{{ widget()?.last_used_at ? 'Last updated ' + stamp(widget()!.last_used_at!) : "Hasn't loaded yet" }}</span></div></div>
+        <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="copy" [size]="18" />Get a new script</button>
+        <button type="button" class="row-btn" (click)="removeWidget()" [disabled]="busy()"><k-icon name="x" [size]="18" />Turn off widget</button>
+      } @else {
+        <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="house" [size]="18" />Set up the widget</button>
+      }
+    </div>
+    @if (widget()?.exists && !script()) { <p class="sheet-meta">A new script replaces the old one, which stops working.</p> }
 
     <div class="sec-h">Account</div>
     <div class="list">
@@ -126,12 +152,53 @@ export class SettingsPage implements OnInit {
     return m ? this.session.eventIds()[m] ?? null : null;
   });
   protected readonly namesOpen = signal(false);
+  protected readonly widget = signal<WidgetKey | null>(null);
+  /** The widget script with a fresh key; only kept until the page is left, since the key is shown once. */
+  protected readonly script = signal<string | null>(null);
+  protected readonly stamp = formatTimestamp;
   protected readonly busy = signal(false);
   protected readonly error = signal('');
   protected readonly form = inject(NonNullableFormBuilder).group({ partner_1_name: [''], partner_2_name: [''] });
 
   ngOnInit(): void {
     void this.push.init();
+    this.api.get<WidgetKey>('/widget/key').then(k => this.widget.set(k), () => undefined);
+  }
+
+  protected async makeWidget(): Promise<void> {
+    this.busy.set(true);
+    try {
+      const { key } = await this.api.post<{ key: string }>('/widget/key');
+      this.script.set(widgetScript(key, location.origin));
+      this.widget.set({ exists: true, created_at: new Date().toISOString(), last_used_at: null });
+    } catch (e) {
+      this.toast.show(errorMessage(e));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  protected async copyScript(code: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(code);
+      this.toast.show('Copied. Now paste it into Scriptable');
+    } catch {
+      this.toast.show("Couldn't copy. Try again");
+    }
+  }
+
+  protected async removeWidget(): Promise<void> {
+    this.busy.set(true);
+    try {
+      await this.api.delete('/widget/key');
+      this.widget.set({ exists: false, created_at: null, last_used_at: null });
+      this.script.set(null);
+      this.toast.show('Widget turned off');
+    } catch (e) {
+      this.toast.show(errorMessage(e));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected async enable(): Promise<void> {
