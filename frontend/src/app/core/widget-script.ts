@@ -1,6 +1,6 @@
 export type WidgetStyle = 'overview' | 'countdown' | 'tasks' | 'budget';
 
-/** The styles offered in Settings. The name is what goes in Scriptable's widget Parameter. */
+/** The styles offered in Settings, each copied as its own script. */
 export const WIDGET_STYLES: { style: WidgetStyle; label: string; hint: string }[] = [
   { style: 'overview', label: 'Overview', hint: 'Countdown, with your next tasks beside it on the wide size' },
   { style: 'countdown', label: 'Countdown', hint: 'Big number of days to go' },
@@ -15,11 +15,11 @@ export const WIDGET_STYLES: { style: WidgetStyle; label: string; hint: string }[
  */
 export function widgetScript(key: string, site: string, style: WidgetStyle = 'overview'): string {
   return `// kita. Home Screen widget for Scriptable. This key only reads your summary; keep it private.
-// Shows the ${style} style. A widget Parameter (overview, countdown, tasks or budget) overrides it.
+// Shows the ${style} style. The widget's Parameter box is ignored.
 const KEY = ${JSON.stringify(key)};
 const SITE = ${JSON.stringify(site)};
 
-const STYLE = String(args.widgetParameter || ${JSON.stringify(style)}).trim().toLowerCase();
+const STYLE = ${JSON.stringify(style)};
 const SIZE = config.widgetFamily || "medium";
 const dyn = (light, dark) => Color.dynamic(new Color(light), new Color(dark));
 // Each mode keeps its own accent, as in the app: rose for Tunang, sage for Perkahwinan.

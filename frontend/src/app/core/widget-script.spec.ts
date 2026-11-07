@@ -17,8 +17,9 @@ describe('widgetScript styles', () => {
 });
 
 describe('widgetScript per style', () => {
-  it('bakes in the chosen style, still overridable by a widget Parameter', () => {
-    expect(widgetScript('k', 'https://kita.example', 'budget')).toContain('String(args.widgetParameter || "budget")');
-    expect(widgetScript('k', 'https://kita.example')).toContain('String(args.widgetParameter || "overview")');
+  it('bakes in the chosen style and ignores the widget Parameter', () => {
+    expect(widgetScript('k', 'https://kita.example', 'budget')).toContain('const STYLE = "budget";');
+    expect(widgetScript('k', 'https://kita.example')).toContain('const STYLE = "overview";');
+    expect(widgetScript('k', 'https://kita.example')).not.toContain('widgetParameter');
   });
 });
