@@ -400,3 +400,4 @@ k-picker{display:block;position:relative}
 .wp-t i{flex:none;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--wi)}
 .wp-t.late{color:var(--danger)}.wp-t.late i{background:var(--danger);border-color:var(--danger)}
 .wp-t.done{font-weight:700}
+

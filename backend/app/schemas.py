@@ -56,6 +56,12 @@ class EventUpdate(Body):
     target_date: dt.date | None = None
     status: EventStatus | None = None
     target_budget_sen: Sen | None = None
+    venue: Short | None = None
+    start_time: dt.time | None = None
+    rsvp_by: dt.date | None = None
+    invite_hosts: Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)] | None = None
+    programme: Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)] | None = None
+    contacts: Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)] | None = None
 
 
 # Checklist --------------------------------------------------------------------------------------
@@ -206,6 +212,13 @@ class GuestUpdate(Body):
     rsvp: Rsvp | None = None
     seats: Annotated[int, Field(ge=1, le=50)] | None = None
     notes: Text | None = None
+
+
+class RsvpAnswer(Body):
+    """A guest's reply on their invitation page."""
+    rsvp: Literal["ATTENDING", "DECLINED"]
+    seats: Annotated[int, Field(ge=1, le=50)] = 1
+    note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] = ""
 
 
 class NoteCreate(Body):

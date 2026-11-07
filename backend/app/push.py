@@ -35,7 +35,7 @@ MODE_LABEL = {"TUNANG": "Tunang", "PERKAHWINAN": "Perkahwinan"}
 @dataclass(frozen=True)
 class Change:
     workspace_id: uuid.UUID
-    actor_user_id: uuid.UUID
+    actor_user_id: uuid.UUID | None   # None: a guest answering their invitation
     actor_slot: int
     event_id: uuid.UUID | None
     action: str
@@ -82,12 +82,13 @@ def flush(db: Connection) -> None:
     try:
         subs = db.execute(select(push_subscriptions).where(
             push_subscriptions.c.workspace_id == change.workspace_id,
-            push_subscriptions.c.user_id != change.actor_user_id,
+            *([push_subscriptions.c.user_id != change.actor_user_id] if change.actor_user_id else []),
             push_subscriptions.c.partner_updates.is_(True))).all()
         if not subs:
             return
         ws = db.execute(select(workspaces).where(workspaces.c.id == change.workspace_id)).one()
-        name = (ws.partner_1_name if change.actor_slot == 1 else ws.partner_2_name) or "Your partner"
+        name = ("A guest" if change.actor_user_id is None
+                else (ws.partner_1_name if change.actor_slot == 1 else ws.partner_2_name) or "Your partner")
         mode = None
         if change.event_id is not None:
             mode = db.execute(select(planning_events.c.mode).where(planning_events.c.id == change.event_id)).scalar()

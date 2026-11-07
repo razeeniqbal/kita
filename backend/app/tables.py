@@ -62,7 +62,8 @@ planning_events = Table(
     "planning_events", metadata, _id(),
     Column("workspace_id", UUID(as_uuid=True)), Column("mode", planning_mode),
     Column("event_name", Text), Column("target_date", Date), Column("status", event_status),
-    Column("target_budget_sen", BigInteger),
+    Column("target_budget_sen", BigInteger), Column("venue", Text), Column("start_time", Time), Column("rsvp_by", Date),
+    Column("invite_hosts", Text), Column("programme", Text), Column("contacts", Text), Column("invite_token", Text),
     *_stamps(),
 )
 
@@ -123,6 +124,7 @@ guests = Table(
     Column("name", Text), Column("family_side", family_side), Column("group_name", Text),
     Column("contact", Text), Column("invitation", invitation_status), Column("rsvp", rsvp_status),
     Column("seats", SmallInteger), Column("notes", Text), Column("copied_from_guest_id", UUID(as_uuid=True)),
+    Column("rsvp_token", Text), Column("rsvp_note", Text), Column("responded_at", DateTime(timezone=True)),
     *_stamps(),
 )
 

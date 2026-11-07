@@ -18,6 +18,10 @@ const modePages: Routes = [
 export const routes: Routes = [
   { path: 'login', title: 'Sign in · kita.', canActivate: [signedOutGuard], loadComponent: () => import('./pages/auth').then(m => m.Login) },
   { path: 'set-password', title: 'Set your password · kita.', loadComponent: () => import('./pages/auth').then(m => m.SetPassword) },
+  // Public: a guest's private invitation link. No sign-in.
+  { path: 'rsvp/:token', title: "You're invited · kita.", loadComponent: () => import('./pages/rsvp').then(m => m.Rsvp) },
+  { path: 'jemputan/:token', title: "You're invited · kita.", data: { shared: true },
+    loadComponent: () => import('./pages/rsvp').then(m => m.Rsvp) },
   { path: 'unavailable', title: 'kita.', loadComponent: () => import('./pages/auth').then(m => m.Unavailable) },
   { path: 'not-invited', title: 'kita.', canActivate: [signedInGuard], loadComponent: () => import('./pages/auth').then(m => m.NotInvited) },
   {

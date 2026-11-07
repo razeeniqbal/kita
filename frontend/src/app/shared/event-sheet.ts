@@ -20,6 +20,9 @@ import { Sheet } from './ui';
         </div>
         <div class="list">
           <div class="field"><label for="ev-date">Date</label><input id="ev-date" type="date" formControlName="target_date"></div>
+          <div class="field"><label for="ev-time">Time</label><input id="ev-time" type="time" formControlName="start_time"></div>
+          <div class="field stack"><label for="ev-venue">Venue</label><input id="ev-venue" formControlName="venue" maxlength="200" placeholder="Shown on guests' invitations"></div>
+          <div class="field"><label for="ev-rsvp">RSVP by</label><input id="ev-rsvp" type="date" formControlName="rsvp_by"></div>
           <div class="field stack"><span class="lab">Status</span>
             <div class="seg" role="radiogroup" aria-label="Status">
               @for (s of statuses; track s) { <label><input type="radio" formControlName="status" [value]="s"><span>{{ statusLabel[s] }}</span></label> }
@@ -28,6 +31,7 @@ import { Sheet } from './ui';
         <div class="list">
           <div class="field"><label for="ev-budget">Budget (RM)</label><input id="ev-budget" inputmode="decimal" formControlName="target_budget" placeholder="0.00"></div>
         </div>
+
         <div class="sheet-acts"><button class="btn block" type="submit" [disabled]="busy() || !event()">Save changes</button></div>
       </form>
     </k-sheet>`,
@@ -51,6 +55,9 @@ export class EventSheet {
   protected readonly form = inject(NonNullableFormBuilder).group({
     event_name: ['', [Validators.required, Validators.maxLength(120)]],
     target_date: [''],
+    start_time: [''],
+    venue: [''],
+    rsvp_by: [''],
     status: ['PLANNING' as EventStatus],
     target_budget: [''],
   });
@@ -69,6 +76,7 @@ export class EventSheet {
       const ev = await this.api.get<PlanningEvent>(eventPath(id));
       this.event.set(ev);
       this.form.reset({ event_name: ev.event_name, target_date: ev.target_date ?? '', status: ev.status,
+                        start_time: ev.start_time?.slice(0, 5) ?? '', venue: ev.venue, rsvp_by: ev.rsvp_by ?? '',
                         target_budget: senToInput(ev.target_budget_sen) });
     } catch (e) {
       this.error.set(errorMessage(e));
@@ -87,6 +95,7 @@ export class EventSheet {
       const updated = await this.api.patch<PlanningEvent>(eventPath(ev.id), {
         version: ev.version, event_name: v.event_name.trim(), target_date: v.target_date || null,
         status: v.status, target_budget_sen: budget,
+        start_time: v.start_time || null, venue: v.venue.trim(), rsvp_by: v.rsvp_by || null,
       });
       this.toast.show('Saved');
       this.saved.emit(updated);

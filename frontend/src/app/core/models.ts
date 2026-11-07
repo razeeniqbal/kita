@@ -72,6 +72,9 @@ export interface BudgetSummary {
 }
 export interface PlanningEvent extends Versioned {
   workspace_id: string; mode: Mode; event_name: string; target_date: string | null; status: EventStatus; target_budget_sen: number;
+  venue: string; start_time: string | null; rsvp_by: string | null;
+  /** Guest invitation wording: who invites, and the programme (one item per line). */
+  invite_hosts: string; programme: string;
 }
 export interface PlanningEventWithFigures extends PlanningEvent { progress: Progress; budget: BudgetSummary; }
 export interface Task extends Versioned {
@@ -103,6 +106,8 @@ export interface CalendarEvent extends Versioned {
 export interface Guest extends Versioned {
   planning_event_id: string; name: string; family_side: FamilySide; group_name: string; contact: string;
   invitation: Invitation; rsvp: Rsvp; seats: number; notes: string;
+  /** Private RSVP link code, or null until the guest is invited through kita. */
+  rsvp_token: string | null; rsvp_note: string; responded_at: string | null;
 }
 export interface GuestList { guests: Guest[]; summary: { total: number; invited: number; seats_confirmed: number; rsvp_pending: number }; }
 export interface Note extends Versioned { planning_event_id: string; title: string; body: string; link: string; pinned: boolean; }

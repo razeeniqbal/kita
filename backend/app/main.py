@@ -8,8 +8,8 @@ from sqlalchemy.exc import DBAPIError
 from app.config import get_settings
 from app.db import DatabaseConfigError, get_db
 from app.errors import config_error_handler, database_error_handler
-from app.routers import (budget, calendar, events, guests, hantaran, notes, notifications, tasks, vendors, widget,
-                         workspace)
+from app.routers import (budget, calendar, events, guests, hantaran, notes, notifications, rsvp, tasks, vendors,
+                         widget, workspace)
 
 app = FastAPI(
     title="kita. API",
@@ -47,7 +47,7 @@ def public_config():
     }
 
 
-for module in (workspace, events, tasks, budget, hantaran, vendors, calendar, guests, notes, notifications, widget):
+for module in (workspace, events, tasks, budget, hantaran, vendors, calendar, guests, notes, notifications, widget, rsvp):
     api.include_router(module.router)
 
 app.include_router(api)

@@ -1,9 +1,13 @@
-"""Guest list for one mode (spec 5.5), with an explicit copy from the other mode."""
+"""Guest list for one mode (spec 5.5), with an explicit copy from the other mode, and each
+guest's private RSVP link (the public page is in rsvp.py)."""
+import secrets
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, insert, or_, select
+from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.engine import Connection
 
-from app.crud import as_dict, log
+from app.crud import as_dict, get_scoped, log
 from app.db import get_db
 from app.deps import Event, Member, get_event, get_member
 from app.routers.factory import register_crud
@@ -37,7 +41,53 @@ def list_guests(event: Event = Depends(get_event), db: Connection = Depends(get_
                                         "seats_confirmed": int(totals[2]), "rsvp_pending": totals[3]}}
 
 
+# Before register_crud, so "/invite-link" isn't read as a guest id.
+@router.post("/invite-link")
+def shared_invite_link(event: Event = Depends(get_event), member: Member = Depends(get_member),
+                       db: Connection = Depends(get_db)):
+    """The event's shared invitation link (made on first use), for sending to groups."""
+    token = db.scalar(select(planning_events.c.invite_token).where(planning_events.c.id == event.id))
+    if not token:
+        token = secrets.token_urlsafe(24)
+        db.execute(update(planning_events).where(planning_events.c.id == event.id).values(invite_token=token))
+        db.commit()
+    return {"token": token}
+
+
+@router.delete("/invite-link", status_code=status.HTTP_204_NO_CONTENT)
+def turn_off_shared_invite_link(event: Event = Depends(get_event), member: Member = Depends(get_member),
+                                db: Connection = Depends(get_db)):
+    """Stop the shared link working. Guests already added keep their own links."""
+    db.execute(update(planning_events).where(planning_events.c.id == event.id).values(invite_token=None))
+    db.commit()
+
+
 register_crud(router, "", guests, "guest", GuestCreate, GuestUpdate, with_list=False, label="name")
+
+
+@router.post("/{item_id}/invite")
+def invite(item_id: uuid.UUID, event: Event = Depends(get_event), member: Member = Depends(get_member),
+           db: Connection = Depends(get_db)):
+    """Give the guest a private RSVP link (or keep the one they have) and mark them invited."""
+    guest = get_scoped(db, guests, event, item_id, "guest")
+    row = as_dict(db.execute(update(guests).where(guests.c.id == item_id).values(
+        rsvp_token=guest["rsvp_token"] or secrets.token_urlsafe(24), invitation="INVITED", updated_by=member.user_id,
+    ).returning(guests)).one())
+    if guest["invitation"] != "INVITED":
+        log(db, member, event.id, "guest.invited", "guest", item_id, f"invited “{guest['name']}”")
+    db.commit()
+    return row
+
+
+@router.delete("/{item_id}/invite")
+def turn_off_invite(item_id: uuid.UUID, event: Event = Depends(get_event), member: Member = Depends(get_member),
+                    db: Connection = Depends(get_db)):
+    """Stop the guest's link working, e.g. if it was forwarded. Sharing again makes a new one."""
+    get_scoped(db, guests, event, item_id, "guest")
+    row = as_dict(db.execute(update(guests).where(guests.c.id == item_id)
+                             .values(rsvp_token=None, updated_by=member.user_id).returning(guests)).one())
+    db.commit()
+    return row
 
 
 @router.post("/copy-from-other-mode")

@@ -413,3 +413,59 @@ def test_widget_key_reads_the_summary_and_a_new_key_revokes_the_old(client, worl
     assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": second}).status_code == 200
     client.delete("/api/v1/widget/key", headers=razeen)
     assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": second}).status_code == 401
+
+
+def test_guest_answers_their_own_invitation_link(client, world):
+    razeen = auth(world.razeen)
+    guest = client.post(url(world.tunang, "/guests"), json={"name": "Mak Long", "seats": 4}, headers=razeen).json()
+    assert client.get("/api/v1/rsvp/not-a-real-token-at-all-123").status_code == 404
+
+    invited = client.post(url(world.tunang, f"/guests/{guest['id']}/invite"), headers=razeen).json()
+    token = invited["rsvp_token"]
+    assert invited["invitation"] == "INVITED" and token
+    page = client.get(f"/api/v1/rsvp/{token}").json()     # no sign-in
+    assert page["guest"] == {"name": "Mak Long", "seats": 4, "rsvp": "PENDING", "note": ""} and not page["closed"]
+
+    too_many = client.post(f"/api/v1/rsvp/{token}", json={"rsvp": "ATTENDING", "seats": 5})
+    assert too_many.status_code == 422
+    answered = client.post(f"/api/v1/rsvp/{token}", json={"rsvp": "ATTENDING", "seats": 3, "note": "Datang lewat sikit"})
+    assert answered.json()["guest"] == {"name": "Mak Long", "seats": 3, "rsvp": "ATTENDING", "note": "Datang lewat sikit"}
+    activity = client.get("/api/v1/activity", headers=razeen).json()
+    assert activity[0]["summary"] == "replied for “Mak Long”: attending, 3 seats" and activity[0]["actor_user_id"] is None
+
+    # Sharing again keeps the same link; turning it off stops it.
+    assert client.post(url(world.tunang, f"/guests/{guest['id']}/invite"), headers=razeen).json()["rsvp_token"] == token
+    client.delete(url(world.tunang, f"/guests/{guest['id']}/invite"), headers=razeen)
+    assert client.get(f"/api/v1/rsvp/{token}").status_code == 404
+
+
+def test_rsvp_closes_after_the_rsvp_by_date(client, world, pg):
+    razeen = auth(world.razeen)
+    pg.execute("update kita.planning_events set rsvp_by = '2020-01-01' where id = %s", (world.tunang,))
+    guest = client.post(url(world.tunang, "/guests"), json={"name": "Pak Ngah"}, headers=razeen).json()
+    token = client.post(url(world.tunang, f"/guests/{guest['id']}/invite"), headers=razeen).json()["rsvp_token"]
+    assert client.get(f"/api/v1/rsvp/{token}").json()["closed"] is True
+    assert client.post(f"/api/v1/rsvp/{token}", json={"rsvp": "DECLINED"}).status_code == 409
+
+
+def test_shared_invitation_link_adds_guests_with_their_answer(client, world):
+    razeen = auth(world.razeen)
+    token = client.post(url(world.tunang, "/guests/invite-link"), headers=razeen).json()["token"]
+    assert client.post(url(world.tunang, "/guests/invite-link"), headers=razeen).json()["token"] == token
+    page = client.get(f"/api/v1/invite/{token}").json()
+    assert page["guest"] is None and page["event"]["mode"] == "TUNANG"
+
+    assert client.post(f"/api/v1/invite/{token}", json={"name": "Aina", "phone": "12", "rsvp": "ATTENDING"}).status_code == 422
+    own = client.post(f"/api/v1/invite/{token}",
+                      json={"name": "Aina & suami", "phone": "012-345 6789", "rsvp": "ATTENDING", "seats": 2}).json()["token"]
+    data = client.get(url(world.tunang, "/guests"), headers=razeen).json()
+    aina = next(g for g in data["guests"] if g["name"] == "Aina & suami")
+    assert (aina["contact"], aina["seats"], aina["rsvp"], aina["group_name"]) == ("012-345 6789", 2, "ATTENDING", "Shared invitation link")
+    assert data["summary"]["seats_confirmed"] == 2
+    # The guest's own link shows and changes their answer.
+    assert client.get(f"/api/v1/rsvp/{own}").json()["guest"]["seats"] == 2
+
+    client.delete(url(world.tunang, "/guests/invite-link"), headers=razeen)
+    assert client.get(f"/api/v1/invite/{token}").status_code == 404
+    assert client.get(f"/api/v1/rsvp/{own}").status_code == 200
+

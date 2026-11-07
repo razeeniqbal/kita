@@ -1,0 +1,133 @@
+<div class="petals" aria-hidden="true">@for (p of petals; track p) { <i></i> }</div>
+
+@if (inv(); as i) {
+  @if (!opened()) {
+    <!-- Cover: a sealed envelope addressed to the guest -->
+    <section class="cover" [class.opening]="opening()">
+      <img class="garland top" src="/assets/kita/botanical-border-960.webp" alt="" aria-hidden="true">
+      <p class="eyebrow">{{ i.event.name }}</p>
+      <p class="script hello">You're Invited</p>
+      <div class="orn" aria-hidden="true"><i></i><b></b><i></i></div>
+      <p class="to">Kepada<br><b>{{ i.guest?.name ?? 'Tetamu yang dihormati' }}</b></p>
+      <button type="button" class="envelope" (click)="open()" aria-label="Buka jemputan">
+        <span class="back"></span>
+        <span class="letter"><span class="script">{{ i.partners[0] }}<em>&amp;</em>{{ i.partners[1] }}</span></span>
+        <span class="pocket"></span>
+        <span class="flap"></span>
+        <span class="seal"><img src="/assets/kita/brand-heart-480.webp" alt=""></span>
+      </button>
+      <p class="tap">Sentuh untuk buka</p>
+    </section>
+  } @else {
+    <main class="invite">
+      <img class="garland top" src="/assets/kita/botanical-border-960.webp" alt="" aria-hidden="true">
+
+      <section class="iv-hero reveal">
+        <p class="eyebrow">{{ i.event.mode === 'PERKAHWINAN' ? 'Walimatul Urus' : 'Walimatul Khitbah' }}</p>
+        <div class="arch"><img [src]="cover(i.event.mode)" alt=""></div>
+        <p class="script save">Save the Date</p>
+        <h1 class="names"><span class="script">{{ i.partners[0] }}</span><em>&amp;</em><span class="script">{{ i.partners[1] }}</span></h1>
+        <p class="kicker">{{ i.event.name }}</p>
+        @if (i.event.date) {
+          <div class="when"><span>{{ dayName(i.event.date) }}</span><b>{{ dotDate(i.event.date) }}</b>
+            <span>{{ i.event.start_time ? time(i.event.start_time) : '' }}</span></div>
+        }
+      </section>
+
+      @if (countdown(); as cd) {
+        <section class="count reveal">
+          <div class="orn" aria-hidden="true"><i></i><b></b><i></i></div>
+          <p class="script">Counting Days</p>
+          <div class="boxes">
+            @for (c of cd; track c.label) { <div><b>{{ c.n }}</b><span>{{ c.label }}</span></div> }
+          </div>
+        </section>
+      }
+
+      <section class="iv-card arched reveal">
+        <p class="bismillah" lang="ar">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</p>
+        <p>Dengan izin Allah SWT yang Maha Pengasih,<br>kami dengan segala hormatnya menjemput</p>
+        <p class="titles">Dato' · Datin · Tuan · Puan · Encik · Cik</p>
+        <p class="guest">{{ i.guest?.name ?? 'Tuan / Puan sekeluarga' }}</p>
+        <p>ke {{ i.event.name }}</p>
+        <div class="orn small" aria-hidden="true"><i></i><b></b><i></i></div>
+        <p class="iv-couple"><span class="script">{{ i.partners[0] }}</span><em>&amp;</em><span class="script">{{ i.partners[1] }}</span></p>
+        <p class="doa">Semoga kehadiran anda memberkati majlis kami.</p>
+      </section>
+
+      <section class="block reveal">
+        <h2 class="script">Lokasi</h2>
+        @if (i.event.venue) {
+          <p class="venue"><k-icon name="map-pin" [size]="16" />{{ i.event.venue }}</p>
+          <div class="nav">
+            <a class="pill-btn" [href]="waze(i.event.venue)" target="_blank" rel="noopener">Waze</a>
+            <a class="pill-btn" [href]="maps(i.event.venue)" target="_blank" rel="noopener">Google Maps</a>
+          </div>
+        } @else {
+          <p class="venue tbc"><k-icon name="map-pin" [size]="16" />TBC · akan dimaklumkan</p>
+        }
+      </section>
+
+      <section class="block rsvp-card reveal" id="rsvp">
+        <h2 class="script">RSVP</h2>
+        <p class="sub">Pengesahan Kehadiran
+          @if (i.event.rsvp_by && !i.closed) { <br><small>Sila balas sebelum {{ longDate(i.event.rsvp_by) }}</small> }</p>
+
+        @if (i.closed) {
+          <div class="done"><b>Tempoh RSVP telah tamat</b>
+            <span>{{ !i.guest || i.guest.rsvp === 'PENDING' ? 'Terima kasih atas perhatian anda.' : answerLine(i) }}</span></div>
+        } @else if (i.guest && i.guest.rsvp !== 'PENDING' && !changing()) {
+          <div class="done" role="status">
+            <span class="heart"><k-icon name="heart" [size]="26" /></span>
+            <span class="big">{{ i.guest.rsvp === 'ATTENDING' ? 'Terima kasih! Jumpa di sana.' : 'Terima kasih kerana memaklumkan.' }}</span>
+            <span>{{ answerLine(i) }}</span>
+            @if (i.guest.note) { <span class="note">“{{ i.guest.note }}”</span> }
+            <button type="button" class="iv-link" (click)="change(i)">Tukar jawapan</button>
+          </div>
+        } @else {
+          <form (submit)="$event.preventDefault(); send(i)" novalidate>
+            @if (error()) { <div class="err" role="alert">{{ error() }}</div> }
+            @if (!i.guest) {
+              <label class="iv-field"><span>Nama</span>
+                <input autocomplete="name" maxlength="160" placeholder="Nama penuh" [value]="name()" (input)="name.set($any($event.target).value)"></label>
+              <label class="iv-field"><span>No. telefon</span>
+                <input type="tel" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="012-345 6789" [value]="phone()" (input)="phone.set($any($event.target).value)"></label>
+            }
+            <div class="choice" role="radiogroup" aria-label="Kehadiran">
+              <button type="button" role="radio" [attr.aria-checked]="answer() === 'ATTENDING'" (click)="answer.set('ATTENDING')">
+                <k-icon name="heart" [size]="22" /><b>Hadir</b></button>
+              <button type="button" role="radio" [attr.aria-checked]="answer() === 'DECLINED'" (click)="answer.set('DECLINED')">
+                <k-icon name="x" [size]="22" /><b>Tidak dapat hadir</b></button>
+            </div>
+            @if (answer() === 'ATTENDING' && maxSeats() > 1) {
+              <div class="seats">
+                <div class="seats-h"><span>Berapa orang akan hadir?</span><small>termasuk anda</small></div>
+                <div class="counts" role="radiogroup" aria-label="Bilangan tetamu">
+                  @for (n of counts(); track n) {
+                    <button type="button" role="radio" [attr.aria-checked]="seats() === n" (click)="seats.set(n)">{{ n }}</button>
+                  }
+                </div>
+              </div>
+            }
+            @if (answer()) {
+              <label class="iv-field"><span>Ucapan untuk pasangan (pilihan)</span>
+                <textarea rows="3" maxlength="500" [value]="note()" (input)="note.set($any($event.target).value)"
+                          placeholder="Doa dan ucapan"></textarea></label>
+              <button class="send" type="submit" [disabled]="busy()">{{ busy() ? 'Menghantar…' : 'Hantar RSVP' }}</button>
+            }
+          </form>
+        }
+      </section>
+
+      <footer class="reveal">
+        <p class="script">Terima kasih</p>
+        <img src="/assets/kita/brand-heart-480.webp" alt="">
+        <span>{{ i.couple }}</span>
+      </footer>
+    </main>
+  }
+} @else if (missing()) {
+  <section class="cover"><p class="script hello">Maaf</p><p class="to">{{ missing() }}</p></section>
+} @else {
+  <section class="cover"><p class="to">Membuka jemputan…</p></section>
+}
