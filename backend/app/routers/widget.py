@@ -56,25 +56,36 @@ def summary(x_widget_key: str = Header(""), db: Connection = Depends(get_db)):
     if owner is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "This widget key was turned off. Make a new one in Settings.")
     db.commit()
+    return _summary(db, owner.workspace_id, owner.user_id)
 
-    slot = db.scalar(select(workspace_members.c.partner_slot).where(workspace_members.c.user_id == owner.user_id))
+
+@router.get("/preview")
+def preview(member: Member = Depends(get_member), db: Connection = Depends(get_db)):
+    """The same data the widget shows, for the style previews in Settings."""
+    return _summary(db, member.workspace_id, member.user_id)
+
+
+def _summary(db: Connection, workspace_id, user_id) -> dict:
+    slot = db.scalar(select(workspace_members.c.partner_slot).where(workspace_members.c.user_id == user_id))
     day = today()
-    events = db.execute(select(planning_events).where(planning_events.c.workspace_id == owner.workspace_id)
+    events = db.execute(select(planning_events).where(planning_events.c.workspace_id == workspace_id)
                         .order_by(planning_events.c.mode)).all()   # enum order: TUNANG first
     open_tasks = db.execute(
         select(tasks.c.title, tasks.c.due_date, planning_events.c.mode)
         .join(planning_events, planning_events.c.id == tasks.c.planning_event_id)
-        .where(planning_events.c.workspace_id == owner.workspace_id,
+        .where(planning_events.c.workspace_id == workspace_id,
                tasks.c.status.in_(("NOT_STARTED", "IN_PROGRESS")), tasks.c.due_date.is_not(None),
                tasks.c.assignee.in_((f"PARTNER_{slot}", "BOTH", "UNASSIGNED")))
         .order_by(tasks.c.due_date).limit(3)).all()
+    budgets = {e.id: budget_summary(db, e.id) for e in events}
     return {
         "today": day,
         "events": [{
             "mode": e.mode, "label": MODE_LABEL[e.mode], "name": e.event_name, "date": e.target_date,
             "days": (e.target_date - day).days if e.target_date else None,
             "percent": progress(db, e.id)["percent"],
-            "left_to_pay_sen": budget_summary(db, e.id)["left_to_pay_sen"],
+            "paid_sen": budgets[e.id]["paid_sen"], "cost_sen": budgets[e.id]["cost_sen"],
+            "left_to_pay_sen": budgets[e.id]["left_to_pay_sen"],
         } for e in events],
         "tasks": [{"title": t.title, "due": t.due_date, "mode": MODE_LABEL[t.mode], "overdue": t.due_date < day}
                   for t in open_tasks],

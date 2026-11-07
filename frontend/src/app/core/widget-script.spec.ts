@@ -1,4 +1,4 @@
-import { widgetScript } from './widget-script';
+import { WIDGET_STYLES, widgetScript } from './widget-script';
 
 describe('widgetScript', () => {
   it('embeds the key and site as safe string literals', () => {
@@ -6,5 +6,12 @@ describe('widgetScript', () => {
     expect(code).toContain('const KEY = "abc\\"def";');
     expect(code).toContain('const SITE = "https://kita.example";');
     expect(code).toContain('"X-Widget-Key": KEY');
+  });
+});
+
+describe('widgetScript styles', () => {
+  it('handles every style offered in Settings', () => {
+    const code = widgetScript('k', 'https://kita.example');
+    for (const { style } of WIDGET_STYLES.filter(s => s.style !== 'overview')) expect(code).toContain(`STYLE === "${style}"`);
   });
 });

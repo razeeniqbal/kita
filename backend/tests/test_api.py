@@ -404,6 +404,8 @@ def test_widget_key_reads_the_summary_and_a_new_key_revokes_the_old(client, worl
     assert {e["mode"] for e in data["events"]} == {"TUNANG", "PERKAHWINAN"}
     assert [t["title"] for t in data["tasks"]] == ["Tempah dewan"] and data["tasks"][0]["overdue"] is True
 
+    assert client.get("/api/v1/widget/preview", headers=razeen).json() == data
+
     second = client.post("/api/v1/widget/key", headers=razeen).json()["key"]
     assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": first}).status_code == 401
     assert client.get("/api/v1/widget/summary", headers={"X-Widget-Key": second}).status_code == 200

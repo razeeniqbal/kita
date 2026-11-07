@@ -7,18 +7,19 @@ import { AuthService } from '../core/auth';
 import { formatTimestamp } from '../core/format';
 import { MODES, Mode } from '../core/models';
 import { PushPrefs, PushService } from '../core/push';
-import { widgetScript } from '../core/widget-script';
+import { WIDGET_STYLES, WidgetStyle, widgetScript } from '../core/widget-script';
 import { SessionStore } from '../core/session';
 import { Theme, ThemeService, Toast } from '../core/ui';
 import { EventSheet } from '../shared/event-sheet';
 import { Icon, IconName } from '../shared/icon';
 import { Notice, Sheet } from '../shared/ui';
+import { WidgetPreview, WidgetSummary } from '../shared/widget-preview';
 
 interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: string | null; }
 
 @Component({
   selector: 'k-settings',
-  imports: [ReactiveFormsModule, EventSheet, Icon, Notice, Sheet],
+  imports: [ReactiveFormsModule, EventSheet, Icon, Notice, Sheet, WidgetPreview],
   template: `
     <div class="ph"><div class="ph-t"><div class="eyebrow">Shared</div><h1>Settings</h1></div></div>
 
@@ -73,6 +74,18 @@ interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: 
     }
 
     <div class="sec-h">Home Screen widget</div>
+    @if (preview(); as p) {
+      <div class="wp-pick" role="radiogroup" aria-label="Widget style">
+        @for (s of styles; track s.style) {
+          <button type="button" class="wp-opt" role="radio" [attr.aria-checked]="chosen() === s.style" (click)="chosen.set(s.style)">
+            <div class="wp-sizes"><k-widget-preview [data]="p" [style]="s.style" /><k-widget-preview [data]="p" [style]="s.style" size="medium" /></div>
+            <span class="t">{{ s.label }}</span><span class="s">{{ s.hint }}</span>
+          </button>
+        }
+      </div>
+      <p class="sheet-meta">To use <b>{{ chosenLabel() }}</b>: on your iPhone, hold the widget → <b>Edit Widget</b> → set
+        <b>Parameter</b> to <b>{{ chosen() }}</b>. Add as many widgets as you like, each with its own style and size.</p>
+    }
     <div class="list">
       @if (script(); as code) {
         <div class="row"><div class="row-main"><span class="t">Your widget is ready to add</span>
@@ -80,7 +93,7 @@ interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: 
             <li>Install <b>Scriptable</b> (free) from the App Store.</li>
             <li>Tap <b>Copy script</b> below. In Scriptable, tap <b>+</b>, paste, and name it <b>kita</b>.</li>
             <li>Hold your Home Screen, tap <b>+</b> (or Edit → Add Widget), choose <b>Scriptable</b> and a size.</li>
-            <li>Hold the new widget → <b>Edit Widget</b> → Script: <b>kita</b>.</li>
+            <li>Hold the new widget → <b>Edit Widget</b> → Script: <b>kita</b>, Parameter: <b>{{ chosen() }}</b>.</li>
           </ol></div></div>
         <button type="button" class="row-btn" (click)="copyScript(code)"><k-icon name="copy" [size]="18" />Copy script</button>
       } @else if (widget()?.exists) {
@@ -153,6 +166,10 @@ export class SettingsPage implements OnInit {
   });
   protected readonly namesOpen = signal(false);
   protected readonly widget = signal<WidgetKey | null>(null);
+  protected readonly styles = WIDGET_STYLES;
+  protected readonly preview = signal<WidgetSummary | null>(null);
+  protected readonly chosen = signal<WidgetStyle>('overview');
+  protected readonly chosenLabel = computed(() => WIDGET_STYLES.find(s => s.style === this.chosen())!.label);
   /** The widget script with a fresh key; only kept until the page is left, since the key is shown once. */
   protected readonly script = signal<string | null>(null);
   protected readonly stamp = formatTimestamp;
@@ -162,6 +179,7 @@ export class SettingsPage implements OnInit {
 
   ngOnInit(): void {
     void this.push.init();
+    this.api.get<WidgetSummary>('/widget/preview').then(p => this.preview.set(p), () => undefined);
     this.api.get<WidgetKey>('/widget/key').then(k => this.widget.set(k), () => undefined);
   }
 
