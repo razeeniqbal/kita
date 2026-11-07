@@ -9,17 +9,17 @@ export const WIDGET_STYLES: { style: WidgetStyle; label: string; hint: string }[
 ];
 
 /**
- * The Scriptable (iPhone) widget, with this person's read-only key filled in. One script serves
- * every style: each widget picks one with its Parameter (blank means overview). Tapping opens kita.
+ * The Scriptable (iPhone) widget, with this person's read-only key and one style filled in. Each
+ * style is its own script, so every widget can show a different one. Tapping opens kita.
  * Keep the layouts in step with the previews in shared/widget-preview.ts.
  */
-export function widgetScript(key: string, site: string): string {
+export function widgetScript(key: string, site: string, style: WidgetStyle = 'overview'): string {
   return `// kita. Home Screen widget for Scriptable. This key only reads your summary; keep it private.
-// Widget Parameter picks the style: overview, countdown, tasks or budget.
+// Shows the ${style} style. A widget Parameter (overview, countdown, tasks or budget) overrides it.
 const KEY = ${JSON.stringify(key)};
 const SITE = ${JSON.stringify(site)};
 
-const STYLE = String(args.widgetParameter || "overview").trim().toLowerCase();
+const STYLE = String(args.widgetParameter || ${JSON.stringify(style)}).trim().toLowerCase();
 const SIZE = config.widgetFamily || "medium";
 const dyn = (light, dark) => Color.dynamic(new Color(light), new Color(dark));
 // Each mode keeps its own accent, as in the app: rose for Tunang, sage for Perkahwinan.

@@ -83,29 +83,29 @@ interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: 
           </button>
         }
       </div>
-      <p class="sheet-meta">To use <b>{{ chosenLabel() }}</b>: on your iPhone, hold the widget → <b>Edit Widget</b> → set
-        <b>Parameter</b> to <b>{{ chosen() }}</b>. Add as many widgets as you like, each with its own style and size.</p>
+      <p class="sheet-meta">Each style is its own script. Copy one for every style you want, then give each widget the script you like.</p>
     }
     <div class="list">
-      @if (script(); as code) {
-        <div class="row"><div class="row-main"><span class="t">Your widget is ready to add</span>
+      @if (key(); as k) {
+        <div class="row"><div class="row-main"><span class="t">Add the {{ chosenLabel() }} widget</span>
           <ol class="steps">
             <li>Install <b>Scriptable</b> (free) from the App Store.</li>
-            <li>Tap <b>Copy script</b> below. In Scriptable, tap <b>+</b>, paste, and name it <b>kita</b>.</li>
+            <li>Tap <b>Copy {{ chosenLabel() }} script</b> below. In Scriptable, tap <b>+</b>, paste, and name it <b>kita {{ chosenLabel() }}</b>.</li>
             <li>Hold your Home Screen, tap <b>+</b> (or Edit → Add Widget), choose <b>Scriptable</b> and a size.</li>
-            <li>Hold the new widget → <b>Edit Widget</b> → Script: <b>kita</b>, Parameter: <b>{{ chosen() }}</b>.</li>
+            <li>Hold the new widget → <b>Edit Widget</b> → Script: <b>kita {{ chosenLabel() }}</b>.</li>
+            <li>For another style, pick it above and repeat.</li>
           </ol></div></div>
-        <button type="button" class="row-btn" (click)="copyScript(code)"><k-icon name="copy" [size]="18" />Copy script</button>
+        <button type="button" class="row-btn" (click)="copyScript(k)"><k-icon name="copy" [size]="18" />Copy {{ chosenLabel() }} script</button>
       } @else if (widget()?.exists) {
         <div class="row"><div class="row-main"><span class="t">Widget is on</span>
           <span class="s">{{ widget()?.last_used_at ? 'Last updated ' + stamp(widget()!.last_used_at!) : "Hasn't loaded yet" }}</span></div></div>
-        <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="copy" [size]="18" />Get a new script</button>
+        <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="copy" [size]="18" />Get new scripts</button>
         <button type="button" class="row-btn" (click)="removeWidget()" [disabled]="busy()"><k-icon name="x" [size]="18" />Turn off widget</button>
       } @else {
         <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="house" [size]="18" />Set up the widget</button>
       }
     </div>
-    @if (widget()?.exists && !script()) { <p class="sheet-meta">A new script replaces the old one, which stops working.</p> }
+    @if (widget()?.exists && !key()) { <p class="sheet-meta">New scripts replace your old ones, which stop working. Paste the new ones over them in Scriptable.</p> }
 
     <div class="sec-h">Account</div>
     <div class="list">
@@ -170,8 +170,8 @@ export class SettingsPage implements OnInit {
   protected readonly preview = signal<WidgetSummary | null>(null);
   protected readonly chosen = signal<WidgetStyle>('overview');
   protected readonly chosenLabel = computed(() => WIDGET_STYLES.find(s => s.style === this.chosen())!.label);
-  /** The widget script with a fresh key; only kept until the page is left, since the key is shown once. */
-  protected readonly script = signal<string | null>(null);
+  /** A fresh widget key; only kept until the page is left, since it is shown once. Every style's script uses it. */
+  protected readonly key = signal<string | null>(null);
   protected readonly stamp = formatTimestamp;
   protected readonly busy = signal(false);
   protected readonly error = signal('');
@@ -187,7 +187,7 @@ export class SettingsPage implements OnInit {
     this.busy.set(true);
     try {
       const { key } = await this.api.post<{ key: string }>('/widget/key');
-      this.script.set(widgetScript(key, location.origin));
+      this.key.set(key);
       this.widget.set({ exists: true, created_at: new Date().toISOString(), last_used_at: null });
     } catch (e) {
       this.toast.show(errorMessage(e));
@@ -196,10 +196,10 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  protected async copyScript(code: string): Promise<void> {
+  protected async copyScript(key: string): Promise<void> {
     try {
-      await navigator.clipboard.writeText(code);
-      this.toast.show('Copied. Now paste it into Scriptable');
+      await navigator.clipboard.writeText(widgetScript(key, location.origin, this.chosen()));
+      this.toast.show(`Copied. Paste it into Scriptable as kita ${this.chosenLabel()}`);
     } catch {
       this.toast.show("Couldn't copy. Try again");
     }
@@ -210,7 +210,7 @@ export class SettingsPage implements OnInit {
     try {
       await this.api.delete('/widget/key');
       this.widget.set({ exists: false, created_at: null, last_used_at: null });
-      this.script.set(null);
+      this.key.set(null);
       this.toast.show('Widget turned off');
     } catch (e) {
       this.toast.show(errorMessage(e));

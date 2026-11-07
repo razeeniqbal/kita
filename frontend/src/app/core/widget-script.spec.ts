@@ -15,3 +15,10 @@ describe('widgetScript styles', () => {
     for (const { style } of WIDGET_STYLES.filter(s => s.style !== 'overview')) expect(code).toContain(`STYLE === "${style}"`);
   });
 });
+
+describe('widgetScript per style', () => {
+  it('bakes in the chosen style, still overridable by a widget Parameter', () => {
+    expect(widgetScript('k', 'https://kita.example', 'budget')).toContain('String(args.widgetParameter || "budget")');
+    expect(widgetScript('k', 'https://kita.example')).toContain('String(args.widgetParameter || "overview")');
+  });
+});
