@@ -380,12 +380,23 @@ k-picker{display:block;position:relative}
 .wp-opt[aria-checked=true]{border-color:var(--accent)}
 .wp-opt .t{font-weight:600}.wp-opt .s{font-size:13px;color:var(--text2)}
 .wp-sizes{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
-.wp{width:120px;height:120px;flex:none;border-radius:20px;background:var(--bg);border:1px solid var(--border);padding:11px 12px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;font-size:10px;line-height:1.3}
-.wp.wide{width:256px}
-.wp span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wp-brand{color:var(--accent-ink);font-size:11px;margin-bottom:3px}
-.wp-s{color:var(--text2)}.wp-head{margin-bottom:2px}.wp-gap{margin-top:4px}
-.wp-big{font-size:26px;font-weight:700;line-height:1.1;color:var(--text)}.wp-big.huge{font-size:34px}
-.wp-mid{font-size:19px;font-weight:700;line-height:1.2;color:var(--text)}
-.wp-t{color:var(--text)}.wp-t.late{color:var(--danger)}
-.wp-row{display:flex;gap:14px;min-width:0}.wp-row>div{display:flex;flex-direction:column;min-width:0;flex:1}
+.wp{--wa:var(--tunang);--wi:var(--tunang-ink);width:132px;height:132px;flex:none;border-radius:22px;padding:12px 13px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;font-size:10px;line-height:1.3;color:var(--text);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--wa) 24%,var(--bg)),var(--bg));border:1px solid color-mix(in srgb,var(--wa) 18%,var(--border))}
+.wp.sage{--wa:var(--wedding);--wi:var(--wedding-ink)}
+.wp.wide{width:284px}
+.wp span,.wp b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wp-top{display:flex;align-items:center;gap:4px;color:var(--wi);margin-bottom:6px}
+.wp-top b{font:700 12px/1 ui-rounded,"SF Pro Rounded",var(--font)}.wp-top span{margin-left:auto;color:var(--text2)}
+.wp-col{display:flex;flex-direction:column;min-width:0;flex:1}
+.wp-row{display:flex;gap:16px;min-width:0}
+.wp-s{color:var(--text2);font-size:10.5px;margin-bottom:1px}.wp-xs{color:var(--text2);font-size:9px;margin-top:3px}
+.wp-days{display:flex;align-items:flex-end;gap:4px}.wp-days small{font-size:9.5px;line-height:1.15;color:var(--text2);padding-bottom:5px}
+.wp-num{font:800 32px/1.05 ui-rounded,"SF Pro Rounded",var(--font);letter-spacing:-.02em}.wp-num.big{font-size:40px}
+.wp-num.mid{font-size:28px}.wp-num.small{font-size:17px}
+.wp-col>.wp-num{font-size:22px}.wp-col>.wp-num.mid{font-size:28px}
+.wp-bar{display:block;height:5px;border-radius:3px;margin-top:6px;background:color-mix(in srgb,var(--wa) 25%,transparent)}
+.wp-bar i{display:block;height:100%;min-width:5px;border-radius:3px;background:var(--wa)}
+.wp-t{display:flex;align-items:center;gap:5px;font-size:10.5px;margin-top:2px}
+.wp-t i{flex:none;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--wi)}
+.wp-t.late{color:var(--danger)}.wp-t.late i{background:var(--danger);border-color:var(--danger)}
+.wp-t.done{font-weight:700}
