@@ -141,7 +141,7 @@ w.refreshAfterDate = new Date(Date.now() + 30 * 60 * 1000);
 header(e, theme);
 const full = SIZE === "small" ? 126 : 296;
 if (!data || !e) {
-  text(w, problem || "Nothing planned yet.", 12, soft);
+  text(w, problem || "Nothing planned yet.", 12, soft).lineLimit = 4;
 } else if (STYLE === "countdown") {
   countdown(w, e, theme, SIZE !== "small", full);
 } else if (STYLE === "tasks") {

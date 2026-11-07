@@ -400,6 +400,8 @@ def test_widget_key_reads_the_summary_and_a_new_key_revokes_the_old(client, worl
     assert client.get("/api/v1/widget/summary").status_code == 401
 
     first = client.post("/api/v1/widget/key", headers=razeen).json()["key"]
+    assert client.get("/api/v1/widget/key", headers=razeen).json()["key"] == first
+    assert client.get("/api/v1/widget/key", headers=auth(world.sabrina)).json()["key"] is None
     data = client.get("/api/v1/widget/summary", headers={"X-Widget-Key": first}).json()
     assert {e["mode"] for e in data["events"]} == {"TUNANG", "PERKAHWINAN"}
     assert [t["title"] for t in data["tasks"]] == ["Tempah dewan"] and data["tasks"][0]["overdue"] is True

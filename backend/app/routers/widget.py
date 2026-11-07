@@ -23,16 +23,18 @@ def _hash(key: str) -> str:
 
 @router.get("/key")
 def key_status(member: Member = Depends(get_member), db: Connection = Depends(get_db)):
-    row = db.execute(select(widget_keys.c.created_at, widget_keys.c.last_used_at)
+    """Whether this person has a widget key, and the key itself so Settings can copy any style's script."""
+    row = db.execute(select(widget_keys.c.key, widget_keys.c.created_at, widget_keys.c.last_used_at)
                      .where(widget_keys.c.user_id == member.user_id)).first()
-    return {"exists": row is not None, "created_at": row and row.created_at, "last_used_at": row and row.last_used_at}
+    return {"exists": row is not None, "key": row and row.key, "created_at": row and row.created_at,
+            "last_used_at": row and row.last_used_at}
 
 
 @router.post("/key")
 def make_key(member: Member = Depends(get_member), db: Connection = Depends(get_db)):
-    """A new key, shown once. Any earlier key for this person stops working."""
+    """A new key. Any earlier key for this person stops working."""
     key = secrets.token_urlsafe(32)
-    values = {"workspace_id": member.workspace_id, "key_hash": _hash(key), "created_at": dt.datetime.now(dt.UTC),
+    values = {"workspace_id": member.workspace_id, "key": key, "key_hash": _hash(key), "created_at": dt.datetime.now(dt.UTC),
               "last_used_at": None}
     db.execute(insert(widget_keys).values(user_id=member.user_id, **values)
                .on_conflict_do_update(index_elements=["user_id"], set_=values))

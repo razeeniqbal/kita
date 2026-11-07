@@ -15,7 +15,7 @@ import { Icon, IconName } from '../shared/icon';
 import { Notice, Sheet } from '../shared/ui';
 import { WidgetPreview, WidgetSummary } from '../shared/widget-preview';
 
-interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: string | null; }
+interface WidgetKey { exists: boolean; key: string | null; created_at: string | null; last_used_at: string | null; }
 
 @Component({
   selector: 'k-settings',
@@ -96,16 +96,15 @@ interface WidgetKey { exists: boolean; created_at: string | null; last_used_at: 
             <li>For another style, pick it above and repeat.</li>
           </ol></div></div>
         <button type="button" class="row-btn" (click)="copyScript(k)"><k-icon name="copy" [size]="18" />Copy {{ chosenLabel() }} script</button>
+        <button type="button" class="row-btn" (click)="removeWidget()" [disabled]="busy()"><k-icon name="x" [size]="18" />Turn off all widgets</button>
       } @else if (widget()?.exists) {
-        <div class="row"><div class="row-main"><span class="t">Widget is on</span>
-          <span class="s">{{ widget()?.last_used_at ? 'Last updated ' + stamp(widget()!.last_used_at!) : "Hasn't loaded yet" }}</span></div></div>
+        <div class="row"><div class="row-main"><span class="t">Your widgets use an older key</span>
+          <span class="s">Get new scripts once, then paste each one over its old script in Scriptable. After that you can copy any style here at any time.</span></div></div>
         <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="copy" [size]="18" />Get new scripts</button>
-        <button type="button" class="row-btn" (click)="removeWidget()" [disabled]="busy()"><k-icon name="x" [size]="18" />Turn off widget</button>
       } @else {
         <button type="button" class="row-btn" (click)="makeWidget()" [disabled]="busy()"><k-icon name="house" [size]="18" />Set up the widget</button>
       }
     </div>
-    @if (widget()?.exists && !key()) { <p class="sheet-meta">New scripts replace your old ones, which stop working. Paste the new ones over them in Scriptable.</p> }
 
     <div class="sec-h">Account</div>
     <div class="list">
@@ -180,7 +179,7 @@ export class SettingsPage implements OnInit {
   ngOnInit(): void {
     void this.push.init();
     this.api.get<WidgetSummary>('/widget/preview').then(p => this.preview.set(p), () => undefined);
-    this.api.get<WidgetKey>('/widget/key').then(k => this.widget.set(k), () => undefined);
+    this.api.get<WidgetKey>('/widget/key').then(k => { this.widget.set(k); this.key.set(k.key); }, () => undefined);
   }
 
   protected async makeWidget(): Promise<void> {
@@ -188,7 +187,7 @@ export class SettingsPage implements OnInit {
     try {
       const { key } = await this.api.post<{ key: string }>('/widget/key');
       this.key.set(key);
-      this.widget.set({ exists: true, created_at: new Date().toISOString(), last_used_at: null });
+      this.widget.set({ exists: true, key, created_at: new Date().toISOString(), last_used_at: null });
     } catch (e) {
       this.toast.show(errorMessage(e));
     } finally {
@@ -209,7 +208,7 @@ export class SettingsPage implements OnInit {
     this.busy.set(true);
     try {
       await this.api.delete('/widget/key');
-      this.widget.set({ exists: false, created_at: null, last_used_at: null });
+      this.widget.set({ exists: false, key: null, created_at: null, last_used_at: null });
       this.key.set(null);
       this.toast.show('Widget turned off');
     } catch (e) {
