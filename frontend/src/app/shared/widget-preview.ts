@@ -5,7 +5,7 @@ import { WidgetStyle } from '../core/widget-script';
 import { Icon } from './icon';
 
 export interface WidgetSummary {
-  events: { mode: Mode; label: string; name: string; days: number | null; percent: number; paid_sen: number;
+  events: { mode: Mode; label: string; name: string; date: string | null; days: number | null; percent: number; paid_sen: number;
             cost_sen: number; left_to_pay_sen: number }[];
   tasks: { title: string; overdue: boolean }[];
 }
@@ -20,7 +20,7 @@ export interface WidgetSummary {
       <div class="wp-top"><k-icon name="heart" [size]="11" /><b>kita.</b>@if (e) { <span>{{ e.label }}</span> }</div>
       @if (e) {
         @switch (layout()) {
-          @case ('countdown') { <div class="wp-col"><ng-container *ngTemplateOutlet="cd; context: { $implicit: e, big: size() === 'medium' }" /></div> }
+          @case ('countdown') { <div class="wp-col"><ng-container *ngTemplateOutlet="cd; context: { $implicit: e, pure: style() === 'countdown' }" /></div> }
           @case ('tasks') { <div class="wp-col"><ng-container *ngTemplateOutlet="list; context: { $implicit: size() === 'small' ? 3 : 4 }" /></div> }
           @case ('budget') {
             <div class="wp-col">
@@ -31,21 +31,24 @@ export interface WidgetSummary {
             </div>
           }
           @case ('split') {
-            <div class="wp-row"><div class="wp-col"><ng-container *ngTemplateOutlet="cd; context: { $implicit: e, big: false }" /></div>
+            <div class="wp-row"><div class="wp-col"><ng-container *ngTemplateOutlet="cd; context: { $implicit: e, pure: false }" /></div>
               <div class="wp-col"><ng-container *ngTemplateOutlet="list; context: { $implicit: 4 }" /></div></div>
           }
         }
       } @else { <span class="wp-s">Nothing planned yet.</span> }
     </div>
 
-    <ng-template #cd let-e let-big="big">
+    <ng-template #cd let-e let-pure="pure">
       <span class="wp-s">{{ e.name }}</span>
       @if (e.days === null) { <span class="wp-num small">Date not set</span> }
       @else {
-        <span class="wp-days"><b class="wp-num" [class.big]="big">{{ e.days === 0 ? 'Today!' : e.days }}</b>
+        <span class="wp-days"><b class="wp-num" [class.big]="pure">{{ e.days === 0 ? 'Today!' : e.days }}</b>
           @if (e.days) { <small>{{ e.days === 1 ? 'day' : 'days' }}<br>to go</small> }</span>
-        <span class="wp-bar"><i [style.width.%]="e.percent"></i></span>
-        <span class="wp-xs">{{ e.percent }}% of tasks done</span>
+        @if (pure) { <span class="wp-s wp-date">{{ longDate(e.date) }}</span> }
+        @else {
+          <span class="wp-bar"><i [style.width.%]="e.percent"></i></span>
+          <span class="wp-xs">{{ e.percent }}% of tasks done</span>
+        }
       }
     </ng-template>
     <ng-template #list let-count>
@@ -67,6 +70,9 @@ export class WidgetPreview {
   });
   protected readonly layout = computed(() =>
     this.style() === 'overview' ? (this.size() === 'small' ? 'countdown' : 'split') : this.style());
+  protected longDate(iso: string): string {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
   protected rm(sen: number): string {
     return 'RM ' + Math.round(sen / 100).toLocaleString('en-MY');
   }

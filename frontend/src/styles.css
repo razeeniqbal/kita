@@ -391,7 +391,7 @@ k-picker{display:block;position:relative}
 .wp-row{display:flex;gap:16px;min-width:0}
 .wp-s{color:var(--text2);font-size:10.5px;margin-bottom:1px}.wp-xs{color:var(--text2);font-size:9px;margin-top:3px}
 .wp-days{display:flex;align-items:flex-end;gap:4px}.wp-days small{font-size:9.5px;line-height:1.15;color:var(--text2);padding-bottom:5px}
-.wp-num{font:800 32px/1.05 ui-rounded,"SF Pro Rounded",var(--font);letter-spacing:-.02em}.wp-num.big{font-size:40px}
+.wp-num{font:800 32px/1.05 ui-rounded,"SF Pro Rounded",var(--font);letter-spacing:-.02em}.wp-num.big{font-size:46px}.wp-date{margin-top:6px}
 .wp-num.mid{font-size:28px}.wp-num.small{font-size:17px}
 .wp-col>.wp-num{font-size:22px}.wp-col>.wp-num.mid{font-size:28px}
 .wp-bar{display:block;height:5px;border-radius:3px;margin-top:6px;background:color-mix(in srgb,var(--wa) 25%,transparent)}

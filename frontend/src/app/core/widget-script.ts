@@ -80,15 +80,20 @@ function header(e, theme) {
   if (e) text(row, e.label, 11, soft);
   w.addSpacer(6);
 }
-function countdown(stack, e, theme, big, width) {
+// pure: the Countdown style, just the number and the date; otherwise with task progress (Overview).
+function countdown(stack, e, theme, width, pure) {
   text(stack, e.name, 12, soft);
   if (e.days === null) return text(stack, "Date not set", 20, ink, "bold");
   const row = stack.addStack();
   row.bottomAlignContent();
-  text(row, e.days === 0 ? "Today!" : String(e.days), big ? 50 : 40, ink, "big");
+  text(row, e.days === 0 ? "Today!" : String(e.days), pure ? (SIZE === "small" ? 56 : 58) : 40, ink, "big");
   row.addSpacer(4);
   if (e.days) text(column(row), e.days === 1 ? "day\\nto go" : "days\\nto go", 11, soft).lineLimit = 2;
   stack.addSpacer(6);
+  if (pure) {
+    const day = new Date(e.date + "T00:00:00");
+    return text(stack, day.toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short", year: "numeric" }), 12, soft);
+  }
   bar(stack, e.percent, width, theme);
   stack.addSpacer(3);
   text(stack, e.percent + "% of tasks done", 10, soft);
@@ -143,16 +148,16 @@ const full = SIZE === "small" ? 126 : 296;
 if (!data || !e) {
   text(w, problem || "Nothing planned yet.", 12, soft).lineLimit = 4;
 } else if (STYLE === "countdown") {
-  countdown(w, e, theme, SIZE !== "small", full);
+  countdown(w, e, theme, full, true);
 } else if (STYLE === "tasks") {
   taskList(w, data.tasks, SIZE === "small" ? 3 : SIZE === "medium" ? 4 : 8, theme);
 } else if (STYLE === "budget") {
   budget(w, e, theme, full);
 } else if (SIZE === "small") {
-  countdown(w, e, theme, false, full);
+  countdown(w, e, theme, full, false);
 } else {
   const row = w.addStack();
-  countdown(column(row), e, theme, false, 120);
+  countdown(column(row), e, theme, 120, false);
   row.addSpacer(18);
   taskList(column(row), data.tasks, SIZE === "large" ? 8 : 4, theme);
 }
